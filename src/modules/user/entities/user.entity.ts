@@ -29,7 +29,7 @@ export class User extends BaseEntity {
   approvalDate: Date;
 
   @Column({ type: 'timestamp', nullable: true })
-  lastLoginDate: Date;
+  lastSignInDate: Date;
 
   @OneToOne(() => UserProfile, (userProfile) => userProfile.user, {
     cascade: true,

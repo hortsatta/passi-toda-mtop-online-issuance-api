@@ -5,6 +5,5 @@ export class AuthSignInDto {
   email: string;
 
   @IsString()
-  @MinLength(8)
   password: string;
 }

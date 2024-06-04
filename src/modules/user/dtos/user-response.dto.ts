@@ -18,6 +18,9 @@ export class UserResponseDto extends BaseResponseDto {
   approvalDate: Date;
 
   @Expose()
+  lastSignInDate: Date;
+
+  @Expose()
   @Type(() => UserProfileResponseDto)
   userProfile: UserProfileResponseDto;
 }
