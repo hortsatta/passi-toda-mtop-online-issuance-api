@@ -65,13 +65,13 @@ export class UserController {
   @Patch('/approve/:memberId')
   @UseAuthGuard([UserRole.Admin, UserRole.Issuer])
   approveUser(
-    @Param('memberId') memberId: number,
+    @Param('memberId') memberId: string,
     @Body() body: { approvalStatus: UserApprovalStatus },
   ): Promise<{
     approvalStatus: User['approvalStatus'];
     approvalDate: User['approvalDate'];
   }> {
-    return this.userService.setApprovalStatus(memberId, body.approvalStatus);
+    return this.userService.setApprovalStatus(+memberId, body.approvalStatus);
   }
 
   // ADMIN
@@ -86,10 +86,10 @@ export class UserController {
   @UseAuthGuard(UserRole.Admin)
   @UseSerializeInterceptor(UserResponseDto)
   async updateUserById(
-    @Param('userId') id: number,
+    @Param('userId') id: string,
     @Body() body: UserUpdateDto,
   ) {
-    const user = await this.userService.findOneById(id);
+    const user = await this.userService.findOneById(+id);
 
     if (!user) {
       throw new NotFoundException('User not found');
@@ -97,13 +97,13 @@ export class UserController {
       throw new UnauthorizedException();
     }
 
-    return this.userService.update(id, body);
+    return this.userService.update(+id, body);
   }
 
   @Delete(`${ADMIN_URL}/:userId`)
   @UseAuthGuard(UserRole.Admin)
-  deleteUserById(@Param('userId') id: number) {
-    return this.userService.delete(id);
+  deleteUserById(@Param('userId') id: string) {
+    return this.userService.delete(+id);
   }
 
   // ISSUER
@@ -119,10 +119,10 @@ export class UserController {
   @UseAuthGuard(UserRole.Issuer)
   @UseSerializeInterceptor(UserResponseDto)
   async updateMemberById(
-    @Param('userId') id: number,
+    @Param('userId') id: string,
     @Body() body: UserUpdateDto,
   ) {
-    const user = await this.userService.findOneById(id);
+    const user = await this.userService.findOneById(+id);
 
     if (!user) {
       throw new NotFoundException('User not found');
@@ -130,7 +130,7 @@ export class UserController {
       throw new UnauthorizedException();
     }
 
-    return this.userService.update(id, body);
+    return this.userService.update(+id, body);
   }
 
   // MEMBER

@@ -1,7 +1,5 @@
 import {
   IsEmail,
-  IsEnum,
-  IsOptional,
   IsString,
   IsStrongPassword,
   MaxLength,
@@ -10,7 +8,6 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
-import { UserApprovalStatus } from '../enums/user.enum';
 import { UserProfileCreateDto } from './user-profile-create.dto';
 
 export class UserCreateDto {
@@ -24,9 +21,9 @@ export class UserCreateDto {
   @MaxLength(100)
   password: string;
 
-  @IsEnum(UserApprovalStatus)
-  @IsOptional()
-  approvalStatus: UserApprovalStatus;
+  // @IsEnum(UserApprovalStatus)
+  // @IsOptional()
+  // approvalStatus: UserApprovalStatus;
 
   @ValidateNested({ each: true })
   @Type(() => UserProfileCreateDto)

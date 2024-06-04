@@ -6,6 +6,8 @@ import cfetch from 'cross-fetch';
 
 import { User } from './user/entities/user.entity';
 import { UserProfile } from './user/entities/user-profile.entity';
+import { Franchise } from './franchise/entities/franchise.entity';
+import { TodaAssociation } from './franchise/entities/toda-association.entity';
 
 @Module({
   imports: [
@@ -33,7 +35,7 @@ import { UserProfile } from './user/entities/user-profile.entity';
           database: configService.get<string>('DATABASE_NAME'),
           // Use snake_case for databse column names
           namingStrategy: new SnakeNamingStrategy(),
-          entities: [User, UserProfile],
+          entities: [User, UserProfile, Franchise, TodaAssociation],
           synchronize: process.env.NODE_ENV !== 'production',
           ssl,
         };

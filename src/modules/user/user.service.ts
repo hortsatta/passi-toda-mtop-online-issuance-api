@@ -30,8 +30,7 @@ export class UserService {
   }
 
   async create(userDto: UserCreateDto, role: UserRole): Promise<User> {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { email, password, approvalStatus, userProfile } = userDto;
+    const { email, password, userProfile } = userDto;
     // Check if email is existing, if true then cancel creation
     const existingUser = await this.userRepo.findOne({ where: { email } });
     if (!!existingUser) throw new ConflictException('Email is already taken');
@@ -49,8 +48,7 @@ export class UserService {
   }
 
   async update(id: number, userDto: UserUpdateDto): Promise<User> {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, approvalStatus, userProfile } = userDto;
+    const { userProfile } = userDto;
     // Get existing user, return error if user row does not exist
     const user = await this.userRepo.findOne({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
@@ -61,13 +59,12 @@ export class UserService {
     });
   }
 
-  async updatePassword(id: number, userDto: UserUpdateDto): Promise<User> {
-    const { password } = userDto;
+  async updatePassword(id: number, newPassword: string): Promise<User> {
     // Get existing user, return error if no password or user row does not exist
     const user = await this.userRepo.findOne({ where: { id } });
-    if (!password || !user) throw new NotFoundException('User not found');
+    if (!newPassword || !user) throw new NotFoundException('User not found');
     // Secure password
-    const encryptedPassword = await encryptPassword(password);
+    const encryptedPassword = await encryptPassword(newPassword);
 
     return this.userRepo.save({
       ...user,

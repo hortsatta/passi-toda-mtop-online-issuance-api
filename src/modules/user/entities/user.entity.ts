@@ -1,6 +1,7 @@
-import { Column, Entity, OneToOne } from 'typeorm';
+import { Column, Entity, OneToMany, OneToOne } from 'typeorm';
 
 import { Base as BaseEntity } from '#/common/entities/base-entity';
+import { Franchise } from '#/modules/franchise/entities/franchise.entity';
 import { UserApprovalStatus, UserRole } from '../enums/user.enum';
 import { UserProfile } from './user-profile.entity';
 
@@ -36,4 +37,7 @@ export class User extends BaseEntity {
     eager: true,
   })
   userProfile: UserProfile;
+
+  @OneToMany(() => Franchise, (franchise) => franchise.user)
+  franchises: Franchise[];
 }
