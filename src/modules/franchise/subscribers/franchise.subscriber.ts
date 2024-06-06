@@ -29,7 +29,9 @@ export class FranchiseSubscriber
     ) {
       event.entity.approvalDate = null;
     } else {
+      const currentDate = dayjs();
       event.entity.approvalDate = dayjs().toDate();
+      event.entity.expiryDate = currentDate.add(1, 'y').toDate();
     }
   }
 
@@ -48,7 +50,9 @@ export class FranchiseSubscriber
       ) {
         event.entity.approvalDate = null;
       } else {
+        const currentDate = dayjs();
         event.entity.approvalDate = dayjs().toDate();
+        event.entity.expiryDate = currentDate.add(1, 'y').toDate();
       }
     }
   }

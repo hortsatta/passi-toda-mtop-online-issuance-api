@@ -6,6 +6,7 @@ import {
   MaxDate,
   IsPhoneNumber,
   IsEnum,
+  MinLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -42,4 +43,10 @@ export class UserProfileUpdateDto {
   @IsEnum(UserGender)
   @IsOptional()
   gender: UserGender;
+
+  @IsString()
+  @MinLength(11)
+  @MaxLength(11)
+  @IsOptional()
+  driverLicenseNo: string;
 }

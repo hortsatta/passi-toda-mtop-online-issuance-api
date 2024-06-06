@@ -45,4 +45,9 @@ export class AuthService {
       user,
     };
   }
+
+  // TODO last logoutdate
+  // async signOut(jwtToken: string): Promise<boolean> {
+  //   this.jwtService.
+  // }
 }

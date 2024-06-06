@@ -27,6 +27,9 @@ export class UserProfile extends BaseEntity {
   })
   gender: UserGender;
 
+  @Column({ type: 'varchar', length: 11 })
+  driverLicenseNo: string;
+
   @OneToOne(() => User, (user) => user.userProfile, { onDelete: 'CASCADE' })
   @JoinColumn()
   user: User;

@@ -6,6 +6,7 @@ import {
   MaxDate,
   IsPhoneNumber,
   IsEnum,
+  MinLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -37,4 +38,9 @@ export class UserProfileCreateDto {
 
   @IsEnum(UserGender)
   gender: UserGender;
+
+  @IsString()
+  @MinLength(11)
+  @MaxLength(11)
+  driverLicenseNo: string;
 }

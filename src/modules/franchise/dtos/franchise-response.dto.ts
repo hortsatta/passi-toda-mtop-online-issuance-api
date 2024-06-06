@@ -1,7 +1,7 @@
 import { Expose, Type } from 'class-transformer';
 
 import { BaseResponseDto } from '#/common/dtos/base-response.dto';
-import { UserResponseDto } from '#/modules/user/dtos/user-response.dto';
+import { UserSafeResponseDto } from '#/modules/user/dtos/user-safe-response.dto';
 import { FranchiseApprovalStatus } from '../enums/franchise.enum';
 import { TodaAssociationResponseDto } from './toda-association-response.dto';
 
@@ -47,6 +47,6 @@ export class FranchiseResponseDto extends BaseResponseDto {
   todaAssociation: TodaAssociationResponseDto;
 
   @Expose()
-  @Type(() => UserResponseDto)
-  user: UserResponseDto;
+  @Type(() => UserSafeResponseDto)
+  user: UserSafeResponseDto;
 }

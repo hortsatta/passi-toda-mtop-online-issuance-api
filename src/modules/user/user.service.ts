@@ -42,6 +42,7 @@ export class UserService {
       password: encryptedPassword,
       role,
       userProfile,
+      approvalStatus: UserApprovalStatus.Approved,
     });
 
     return this.userRepo.save(newUser);

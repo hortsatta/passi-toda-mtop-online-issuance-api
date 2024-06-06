@@ -30,12 +30,70 @@ export class FranchiseService {
 
   // TODO get paginated
 
+  getAllFranchises(
+    sort?: string,
+    franchiseIds?: number[],
+    q?: string,
+    status?: string,
+    take?: number,
+  ) {
+    const generateWhere = () => {
+      let baseWhere: FindOptionsWhere<Franchise> = {};
+
+      if (franchiseIds?.length) {
+        baseWhere = { ...baseWhere, id: In(franchiseIds) };
+      }
+
+      if (status?.trim()) {
+        baseWhere = { ...baseWhere, approvalStatus: In(status.split(',')) };
+      }
+
+      if (q?.trim()) {
+        return [
+          { plateNo: ILike(`%${q}%`), ...baseWhere },
+          { mvFileNo: ILike(`%${q}%`), ...baseWhere },
+        ];
+      }
+
+      return baseWhere;
+    };
+
+    const generateOrder = (): FindOptionsOrder<Franchise> => {
+      if (!sort) {
+        return { plateNo: 'ASC' };
+      }
+
+      const [sortBy, sortOrder] = sort?.split(',') || [];
+
+      // if (sortBy === 'scheduleDate') {
+      //   return { schedules: { startDate: sortOrder as FindOptionsOrderValue } };
+      // }
+
+      return { [sortBy]: sortOrder };
+    };
+
+    const takeOptions = !!take
+      ? {
+          take,
+          skip: 0,
+        }
+      : {};
+
+    return this.franchiseRepo.find({
+      where: generateWhere(),
+      order: generateOrder(),
+      ...takeOptions,
+      relations: { todaAssociation: true, user: true },
+    });
+  }
+
   getAllFranchisesByMemberId(
     memberId: number,
     sort?: string,
     franchiseIds?: number[],
     q?: string,
     status?: string,
+    take?: number,
   ) {
     const generateWhere = () => {
       let baseWhere: FindOptionsWhere<Franchise> = {
@@ -74,39 +132,18 @@ export class FranchiseService {
       return { [sortBy]: sortOrder };
     };
 
+    const takeOptions = !!take
+      ? {
+          take,
+          skip: 0,
+        }
+      : {};
+
     return this.franchiseRepo.find({
       where: generateWhere(),
       order: generateOrder(),
+      ...takeOptions,
       relations: { todaAssociation: true },
-    });
-  }
-
-  getAllFranchisesByMvPlateNo(
-    mvPlateNo: string,
-    status?: string,
-    memberId?: number,
-  ) {
-    const generateWhere = () => {
-      let baseWhere: FindOptionsWhere<Franchise> = {};
-
-      if (memberId) {
-        baseWhere = { ...baseWhere, user: { id: memberId } };
-      }
-
-      if (status?.trim()) {
-        baseWhere = { ...baseWhere, approvalStatus: In(status.split(',')) };
-      }
-
-      return [
-        { plateNo: ILike(`%${mvPlateNo}%`), ...baseWhere },
-        { mvFileNo: ILike(`%${mvPlateNo}%`), ...baseWhere },
-      ];
-    };
-
-    return this.franchiseRepo.find({
-      where: generateWhere(),
-      order: { plateNo: 'ASC' },
-      relations: { user: true, todaAssociation: true },
     });
   }
 
@@ -127,13 +164,18 @@ export class FranchiseService {
 
     const existingFranchise = await this.franchiseRepo.findOne({
       where: [{ mvFileNo }, { plateNo }],
+      relations: { user: true },
     });
 
     const todaAssociation = await this.todaAssociationRepo.findOne({
       where: { id: todaAssociationId },
     });
 
-    if (existingFranchise.approvalStatus === FranchiseApprovalStatus.Approved) {
+    if (
+      existingFranchise?.approvalStatus === FranchiseApprovalStatus.Approved ||
+      (existingFranchise?.user.id === memberId &&
+        existingFranchise?.approvalStatus !== FranchiseApprovalStatus.Rejected)
+    ) {
       throw new BadRequestException('Vehicle already registered');
     } else if (!todaAssociation) {
       throw new BadRequestException('TODA Association not found');
@@ -205,7 +247,7 @@ export class FranchiseService {
     let updatedApprovalStatus = approvalStatus;
 
     if (!approvalStatus) {
-      switch (approvalStatus) {
+      switch (franchise.approvalStatus) {
         case FranchiseApprovalStatus.PendingValidation:
           updatedApprovalStatus = FranchiseApprovalStatus.PendingPayment;
           break;
@@ -215,9 +257,14 @@ export class FranchiseService {
       }
     }
 
-    return this.franchiseRepo.save({
+    await this.franchiseRepo.save({
       ...franchise,
       approvalStatus: updatedApprovalStatus,
+    });
+
+    return this.franchiseRepo.findOne({
+      where: { id },
+      relations: { todaAssociation: true, user: true },
     });
   }
 
