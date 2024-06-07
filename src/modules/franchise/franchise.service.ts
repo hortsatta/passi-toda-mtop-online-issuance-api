@@ -29,6 +29,71 @@ export class FranchiseService {
     private readonly todaAssociationRepo: Repository<TodaAssociation>,
   ) {}
 
+  async validateCreateFranchise(
+    franchiseDto: FranchiseCreateDto,
+    memberId: number,
+  ) {
+    const { mvFileNo, plateNo, todaAssociationId } = franchiseDto;
+
+    const existingFranchise = await this.franchiseRepo.findOne({
+      where: [{ mvFileNo }, { plateNo }],
+      relations: { user: true },
+    });
+
+    const todaAssociation = await this.todaAssociationRepo.findOne({
+      where: { id: todaAssociationId },
+    });
+
+    if (existingFranchise?.user.id === memberId) {
+      throw new BadRequestException('Vehicle already exist');
+    }
+
+    if (
+      existingFranchise?.approvalStatus === FranchiseApprovalStatus.Approved ||
+      existingFranchise?.approvalStatus ===
+        FranchiseApprovalStatus.PendingPayment
+    ) {
+      throw new BadRequestException('Vehicle already registered');
+    } else if (!todaAssociation) {
+      throw new BadRequestException('TODA Association not found');
+    }
+  }
+
+  async validateUpdateFranchise(id: number, memberId: number) {
+    // Find franchise, throw error if none found
+    const franchise = await this.franchiseRepo.findOne({
+      where: {
+        id,
+        approvalStatus: FranchiseApprovalStatus.PendingValidation,
+        user: { id: memberId },
+        todaAssociation: { id: Not(IsNull()) },
+      },
+    });
+
+    if (!franchise) {
+      throw new NotFoundException('Franchise not found');
+    }
+
+    const baseWhere = {
+      id: Not(id),
+      approvalStatus: In([
+        FranchiseApprovalStatus.PendingPayment,
+        FranchiseApprovalStatus.Approved,
+      ]),
+    };
+
+    const existingFranchise = await this.franchiseRepo.findOne({
+      where: [
+        { mvFileNo: franchise.mvFileNo, ...baseWhere },
+        { plateNo: franchise.plateNo, ...baseWhere },
+      ],
+    });
+
+    if (existingFranchise) {
+      throw new BadRequestException('Vehicle already registered');
+    }
+  }
+
   // TODO get paginated
 
   getAllFranchises(
@@ -156,6 +221,23 @@ export class FranchiseService {
     });
   }
 
+  async validateUpsert(
+    franchiseDto: FranchiseCreateDto | FranchiseUpdateDto,
+    memberId: number,
+    id?: number,
+  ): Promise<boolean> {
+    if (!id) {
+      await this.validateCreateFranchise(
+        franchiseDto as FranchiseCreateDto,
+        memberId,
+      );
+    } else {
+      await this.validateUpdateFranchise(id, memberId);
+    }
+
+    return true;
+  }
+
   async create(
     franchiseDto: FranchiseCreateDto,
     memberId: number,
@@ -163,24 +245,7 @@ export class FranchiseService {
     const { mvFileNo, plateNo, todaAssociationId, ...moreFranchiseDto } =
       franchiseDto;
 
-    const existingFranchise = await this.franchiseRepo.findOne({
-      where: [{ mvFileNo }, { plateNo }],
-      relations: { user: true },
-    });
-
-    const todaAssociation = await this.todaAssociationRepo.findOne({
-      where: { id: todaAssociationId },
-    });
-
-    if (
-      existingFranchise?.approvalStatus === FranchiseApprovalStatus.Approved ||
-      existingFranchise?.approvalStatus ===
-        FranchiseApprovalStatus.PendingPayment
-    ) {
-      throw new BadRequestException('Vehicle already registered');
-    } else if (!todaAssociation) {
-      throw new BadRequestException('TODA Association not found');
-    }
+    await this.validateCreateFranchise(franchiseDto, memberId);
 
     const franchise = this.franchiseRepo.create({
       ...moreFranchiseDto,
@@ -199,38 +264,8 @@ export class FranchiseService {
     memberId: number,
   ): Promise<Franchise> {
     const { todaAssociationId, ...moreFranchiseDto } = franchiseDto;
-    // Find franchise, throw error if none found
-    const franchise = await this.franchiseRepo.findOne({
-      where: {
-        id,
-        approvalStatus: FranchiseApprovalStatus.PendingValidation,
-        user: { id: memberId },
-        todaAssociation: { id: Not(IsNull()) },
-      },
-    });
 
-    if (!franchise) {
-      throw new NotFoundException('Franchise not found');
-    }
-
-    const baseWhere = {
-      id: Not(id),
-      approvalStatus: In([
-        FranchiseApprovalStatus.PendingPayment,
-        FranchiseApprovalStatus.Approved,
-      ]),
-    };
-
-    const existingFranchise = await this.franchiseRepo.findOne({
-      where: [
-        { mvFileNo: franchise.mvFileNo, ...baseWhere },
-        { plateNo: franchise.plateNo, ...baseWhere },
-      ],
-    });
-
-    if (existingFranchise) {
-      throw new BadRequestException('Vehicle already registered');
-    }
+    await this.validateUpdateFranchise(id, memberId);
 
     return this.franchiseRepo.save({
       ...moreFranchiseDto,

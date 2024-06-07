@@ -24,7 +24,17 @@ export class UploadService {
     private readonly configService: ConfigService,
   ) {}
 
-  async uploadFranchiseImages(files: Express.Multer.File[], id: number) {
+  async uploadFranchiseImages(
+    files: Express.Multer.File[],
+    memberId: number,
+  ): Promise<{
+    vehicleORImgUrl?: string;
+    vehicleCRImgUrl?: string;
+    todaAssocMembershipImgUrl?: string;
+    ownerDriverLicenseNoImgUrl?: string;
+    brgyClearanceImgUrl?: string;
+    voterRegRecordImgUrl?: string;
+  }> {
     if (!files?.length) {
       throw new BadRequestException('No files selected');
     }
@@ -33,7 +43,7 @@ export class UploadService {
 
     const basePath = `${this.configService.get<string>(
       'SUPABASE_BASE_FOLDER_NAME',
-    )}/${id}/${baseName}`;
+    )}/${memberId}/${baseName}`;
 
     try {
       const transformedFiles = await Promise.all(
@@ -51,23 +61,26 @@ export class UploadService {
       );
 
       const results = await Promise.all(
-        transformedFiles.map(({ buffer, originalname }) => {
-          const filename = path.parse(originalname).name;
+        transformedFiles.map(async ({ buffer, originalname }) => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const [mv, key, name] = originalname.split('-');
+          const filename = path.parse(name).name;
           const targetFilename = `${filename}.${COMPRESSION_OPTIONS.format}`;
           const targetPath = `${basePath}/${targetFilename}`;
 
-          return this.supabaseService
+          const { data } = await this.supabaseService
             .getClient()
             .storage.from(this.configService.get<string>('SUPABASE_BUCKET_ID'))
             .upload(targetPath, buffer, {
               cacheControl: '3600',
               upsert: true,
             });
+
+          return { [key]: data.path };
         }),
       );
-      console.log(results);
 
-      return results.map(({ data }) => data.path);
+      return Object.assign({}, ...results);
     } catch (error) {
       throw new InternalServerErrorException(
         'An error has occured. Upload failed',

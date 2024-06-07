@@ -26,7 +26,14 @@ export class UploadController {
     @UploadedFiles(new FileValidationPipe(fileValidationOptions))
     files: Express.Multer.File[],
     @CurrentUser() user: User,
-  ): Promise<string[]> {
+  ): Promise<{
+    vehicleORImgUrl?: string;
+    vehicleCRImgUrl?: string;
+    todaAssocMembershipImgUrl?: string;
+    ownerDriverLicenseNoImgUrl?: string;
+    brgyClearanceImgUrl?: string;
+    voterRegRecordImgUrl?: string;
+  }> {
     return this.uploadService.uploadFranchiseImages(files, +user.id);
   }
 }

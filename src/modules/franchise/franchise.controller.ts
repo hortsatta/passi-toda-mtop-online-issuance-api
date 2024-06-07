@@ -138,6 +138,20 @@ export class FranchiseController {
     return this.franchiseService.getOneById(+id, memberId);
   }
 
+  @Post('/validate')
+  @UseAuthGuard(UserRole.Member)
+  async validateUpsert(
+    @Body() body: FranchiseCreateDto | FranchiseUpdateDto,
+    @CurrentUser() user: User,
+    @Query('id') id?: string,
+  ) {
+    return this.franchiseService.validateUpsert(
+      body,
+      user.id,
+      id ? +id : undefined,
+    );
+  }
+
   @Post()
   @UseAuthGuard(UserRole.Member)
   @UseSerializeInterceptor(FranchiseResponseDto)
