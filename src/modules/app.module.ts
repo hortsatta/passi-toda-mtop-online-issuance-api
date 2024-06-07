@@ -5,6 +5,7 @@ import { DatabaseModule } from './database.module';
 import { UserModule } from './user/user.module';
 import { FranchiseModule } from './franchise/franchise.module';
 import { CoreModule } from './core/core.module';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { CoreModule } from './core/core.module';
     CoreModule,
     UserModule,
     FranchiseModule,
+    UploadModule,
   ],
   controllers: [],
 })

@@ -9,6 +9,7 @@ import {
   FindOptionsWhere,
   ILike,
   In,
+  IsNull,
   Not,
   Repository,
 } from 'typeorm';
@@ -173,8 +174,8 @@ export class FranchiseService {
 
     if (
       existingFranchise?.approvalStatus === FranchiseApprovalStatus.Approved ||
-      (existingFranchise?.user.id === memberId &&
-        existingFranchise?.approvalStatus !== FranchiseApprovalStatus.Rejected)
+      existingFranchise?.approvalStatus ===
+        FranchiseApprovalStatus.PendingPayment
     ) {
       throw new BadRequestException('Vehicle already registered');
     } else if (!todaAssociation) {
@@ -200,33 +201,34 @@ export class FranchiseService {
     const { todaAssociationId, ...moreFranchiseDto } = franchiseDto;
     // Find franchise, throw error if none found
     const franchise = await this.franchiseRepo.findOne({
-      where: { id, user: { id: memberId } },
-    });
-
-    const todaAssociation = await this.todaAssociationRepo.findOne({
-      where: { id: todaAssociationId },
+      where: {
+        id,
+        approvalStatus: FranchiseApprovalStatus.PendingValidation,
+        user: { id: memberId },
+        todaAssociation: { id: Not(IsNull()) },
+      },
     });
 
     if (!franchise) {
       throw new NotFoundException('Franchise not found');
-    } else if (!todaAssociation) {
-      throw new BadRequestException('TODA Association not found');
-    } else if (
-      franchise.approvalStatus !== FranchiseApprovalStatus.PendingValidation
-    ) {
-      throw new BadRequestException('Cannot update registered franchise');
     }
+
+    const baseWhere = {
+      id: Not(id),
+      approvalStatus: In([
+        FranchiseApprovalStatus.PendingPayment,
+        FranchiseApprovalStatus.Approved,
+      ]),
+    };
 
     const existingFranchise = await this.franchiseRepo.findOne({
       where: [
-        { mvFileNo: franchise.mvFileNo, id: Not(id) },
-        { plateNo: franchise.plateNo, id: Not(id) },
+        { mvFileNo: franchise.mvFileNo, ...baseWhere },
+        { plateNo: franchise.plateNo, ...baseWhere },
       ],
     });
 
-    if (
-      existingFranchise?.approvalStatus === FranchiseApprovalStatus.Approved
-    ) {
+    if (existingFranchise) {
       throw new BadRequestException('Vehicle already registered');
     }
 

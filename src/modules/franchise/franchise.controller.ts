@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Query,
+  UnauthorizedException,
 } from '@nestjs/common';
 
 import { UseSerializeInterceptor } from '#/common/interceptors/serialize.interceptor';
@@ -159,11 +160,19 @@ export class FranchiseController {
   }
 
   @Patch('/approve/:id')
-  @UseAuthGuard([UserRole.Admin, UserRole.Issuer])
+  @UseAuthGuard([UserRole.Admin, UserRole.Issuer, UserRole.Member])
   approveFranchise(
     @Param('id') id: string,
     @Body() body: { approvalStatus?: FranchiseApprovalStatus },
+    @CurrentUser() user: User,
   ): Promise<Franchise> {
+    if (
+      user.role === UserRole.Member &&
+      body.approvalStatus !== FranchiseApprovalStatus.Canceled
+    ) {
+      throw new UnauthorizedException('Action is forbidden');
+    }
+
     return this.franchiseService.setApprovalStatus(+id, body.approvalStatus);
   }
 

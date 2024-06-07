@@ -5,6 +5,7 @@ import {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
+import { contentParser } from 'fastify-multer';
 
 import { DatabaseExceptionFilter } from './common/filters/databse-exception.filter';
 import { AppModule } from './modules/app.module';
@@ -54,8 +55,7 @@ async function bootstrap() {
   // Catch database specific errors/exception
   app.useGlobalFilters(new DatabaseExceptionFilter());
 
-  // TODO
-  // await app.register(contentParser);
+  await app.register(contentParser as any);
   await app.listen(configService.get<number>('API_PORT') || 3001, '0.0.0.0');
 }
 bootstrap();

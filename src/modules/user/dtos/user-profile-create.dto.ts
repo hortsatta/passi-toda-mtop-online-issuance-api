@@ -22,11 +22,6 @@ export class UserProfileCreateDto {
   @MaxLength(50)
   lastName: string;
 
-  @IsString()
-  @MaxLength(50)
-  @IsOptional()
-  middleName: string;
-
   @Type(() => Date)
   @IsDate()
   @MaxDate(dayjs().toDate())
@@ -40,7 +35,13 @@ export class UserProfileCreateDto {
   gender: UserGender;
 
   @IsString()
+  @MaxLength(50)
+  @IsOptional()
+  middleName: string;
+
+  @IsString()
   @MinLength(11)
   @MaxLength(11)
+  @IsOptional()
   driverLicenseNo: string;
 }
