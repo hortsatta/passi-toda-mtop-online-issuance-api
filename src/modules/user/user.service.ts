@@ -21,11 +21,11 @@ export class UserService {
 
   // TODO get members paginated
 
-  async findOneById(id: number) {
+  async findOneById(id: number): Promise<User> {
     return this.userRepo.findOne({ where: { id } });
   }
 
-  async findOneByEmail(email: string) {
+  async findOneByEmail(email: string): Promise<User> {
     return this.userRepo.findOne({ where: { email } });
   }
 

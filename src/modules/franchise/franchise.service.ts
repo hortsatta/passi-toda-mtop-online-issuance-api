@@ -10,6 +10,7 @@ import {
   ILike,
   In,
   IsNull,
+  MoreThanOrEqual,
   Not,
   Repository,
 } from 'typeorm';
@@ -102,7 +103,8 @@ export class FranchiseService {
     q?: string,
     status?: string,
     take?: number,
-  ) {
+    startDate?: Date,
+  ): Promise<Franchise[]> {
     const generateWhere = () => {
       let baseWhere: FindOptionsWhere<Franchise> = {};
 
@@ -112,6 +114,10 @@ export class FranchiseService {
 
       if (status?.trim()) {
         baseWhere = { ...baseWhere, approvalStatus: In(status.split(',')) };
+      }
+
+      if (startDate) {
+        baseWhere = { ...baseWhere, createdAt: MoreThanOrEqual(startDate) };
       }
 
       if (q?.trim()) {
@@ -160,7 +166,7 @@ export class FranchiseService {
     q?: string,
     status?: string,
     take?: number,
-  ) {
+  ): Promise<Franchise[]> {
     const generateWhere = () => {
       let baseWhere: FindOptionsWhere<Franchise> = {
         user: { id: memberId },
@@ -242,15 +248,25 @@ export class FranchiseService {
     franchiseDto: FranchiseCreateDto,
     memberId: number,
   ): Promise<Franchise> {
-    const { mvFileNo, plateNo, todaAssociationId, ...moreFranchiseDto } =
-      franchiseDto;
+    const {
+      mvFileNo: targetMvFileNo,
+      plateNo: targetPlateNo,
+      ownerDriverLicenseNo: targetOwnerDriverLicenseNo,
+      todaAssociationId,
+      ...moreFranchiseDto
+    } = franchiseDto;
 
     await this.validateCreateFranchise(franchiseDto, memberId);
+
+    const mvFileNo = targetMvFileNo.toLowerCase();
+    const plateNo = targetPlateNo.toLowerCase();
+    const ownerDriverLicenseNo = targetOwnerDriverLicenseNo.toLowerCase();
 
     const franchise = this.franchiseRepo.create({
       ...moreFranchiseDto,
       mvFileNo,
       plateNo,
+      ownerDriverLicenseNo,
       todaAssociation: { id: todaAssociationId },
       user: { id: memberId },
     });
@@ -263,12 +279,25 @@ export class FranchiseService {
     id: number,
     memberId: number,
   ): Promise<Franchise> {
-    const { todaAssociationId, ...moreFranchiseDto } = franchiseDto;
+    const {
+      mvFileNo: targetMvFileNo,
+      plateNo: targetPlateNo,
+      ownerDriverLicenseNo: targetOwnerDriverLicenseNo,
+      todaAssociationId,
+      ...moreFranchiseDto
+    } = franchiseDto;
 
     await this.validateUpdateFranchise(id, memberId);
 
+    const mvFileNo = targetMvFileNo?.toLowerCase();
+    const plateNo = targetPlateNo?.toLowerCase();
+    const ownerDriverLicenseNo = targetOwnerDriverLicenseNo?.toLowerCase();
+
     return this.franchiseRepo.save({
       ...moreFranchiseDto,
+      ...(mvFileNo && { mvFileNo }),
+      ...(plateNo && { plateNo }),
+      ...(ownerDriverLicenseNo && { ownerDriverLicenseNo }),
       todaAssociation: { id: todaAssociationId },
     });
   }

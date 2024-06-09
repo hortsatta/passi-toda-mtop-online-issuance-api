@@ -10,6 +10,8 @@ import dayjs from '#/common/config/dayjs.config';
 import { Franchise } from '../entities/franchise.entity';
 import { FranchiseApprovalStatus } from '../enums/franchise.enum';
 
+const EXPIRY_YEAR = 1;
+
 @EventSubscriber()
 export class FranchiseSubscriber
   implements EntitySubscriberInterface<Franchise>
@@ -31,7 +33,10 @@ export class FranchiseSubscriber
     } else {
       const currentDate = dayjs();
       event.entity.approvalDate = dayjs().toDate();
-      event.entity.expiryDate = currentDate.add(1, 'y').toDate();
+      // Set expiry date by 1year when status is approved
+      if (event.entity.approvalStatus === FranchiseApprovalStatus.Approved) {
+        event.entity.expiryDate = currentDate.add(EXPIRY_YEAR, 'y').toDate();
+      }
     }
   }
 
@@ -52,7 +57,10 @@ export class FranchiseSubscriber
       } else {
         const currentDate = dayjs();
         event.entity.approvalDate = dayjs().toDate();
-        event.entity.expiryDate = currentDate.add(1, 'y').toDate();
+        // Set expiry date by 1year when status is approved
+        if (event.entity.approvalStatus === FranchiseApprovalStatus.Approved) {
+          event.entity.expiryDate = currentDate.add(EXPIRY_YEAR, 'y').toDate();
+        }
       }
     }
   }

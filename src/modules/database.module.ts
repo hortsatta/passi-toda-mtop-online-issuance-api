@@ -7,6 +7,8 @@ import { User } from './user/entities/user.entity';
 import { UserProfile } from './user/entities/user-profile.entity';
 import { Franchise } from './franchise/entities/franchise.entity';
 import { TodaAssociation } from './franchise/entities/toda-association.entity';
+import { RateSheet } from './rate-sheet/entities/rate-sheet.entity';
+import { RateSheetFee } from './rate-sheet/entities/rate-sheet-fee.entity';
 
 @Module({
   imports: [
@@ -30,7 +32,14 @@ import { TodaAssociation } from './franchise/entities/toda-association.entity';
           database: configService.get<string>('DATABASE_NAME'),
           // Use snake_case for databse column names
           namingStrategy: new SnakeNamingStrategy(),
-          entities: [User, UserProfile, Franchise, TodaAssociation],
+          entities: [
+            User,
+            UserProfile,
+            Franchise,
+            TodaAssociation,
+            RateSheet,
+            RateSheetFee,
+          ],
           synchronize: process.env.NODE_ENV !== 'production',
           ssl,
         };

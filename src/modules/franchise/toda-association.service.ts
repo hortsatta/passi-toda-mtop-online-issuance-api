@@ -30,7 +30,7 @@ export class TodaAssociationService {
     todaAssociationIds?: number[],
     q?: string,
     withFranchise?: boolean,
-  ) {
+  ): Promise<TodaAssociation[]> {
     const generateWhere = () => {
       let baseWhere: FindOptionsWhere<TodaAssociation> = {};
 

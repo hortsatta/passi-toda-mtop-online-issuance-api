@@ -14,5 +14,6 @@ import { TodaAssociationController } from './toda-association.controller';
   imports: [TypeOrmModule.forFeature([Franchise, TodaAssociation]), UserModule],
   controllers: [FranchiseController, TodaAssociationController],
   providers: [FranchiseSubscriber, FranchiseService, TodaAssociationService],
+  exports: [FranchiseService],
 })
 export class FranchiseModule {}

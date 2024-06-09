@@ -6,6 +6,7 @@ import { UserModule } from './user/user.module';
 import { FranchiseModule } from './franchise/franchise.module';
 import { CoreModule } from './core/core.module';
 import { UploadModule } from './upload/upload.module';
+import { RateSheetModule } from './rate-sheet/rate-sheet.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { UploadModule } from './upload/upload.module';
     UserModule,
     FranchiseModule,
     UploadModule,
+    RateSheetModule,
   ],
   controllers: [],
 })
