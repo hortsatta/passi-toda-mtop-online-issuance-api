@@ -12,10 +12,11 @@ import {
 import { UseFilterFieldsInterceptor } from '#/common/interceptors/filter-fields.interceptor';
 import { UseSerializeInterceptor } from '#/common/interceptors/serialize.interceptor';
 import { UseAuthGuard } from '../user/guards/auth.guard';
+import { UserRole } from '../user/enums/user.enum';
 import { RateSheetService } from './rate-sheet.service';
 import { RateSheet } from './entities/rate-sheet.entity';
 import { RateSheetResponseDto } from './dtos/rate-sheet-response.dto';
-import { UserRole } from '../user/enums/user.enum';
+import { FeeType } from './enums/rate-sheet.enum';
 import { RateSheetCreateDto } from './dtos/rate-sheet-create.dto';
 import { RateSheetUpdateDto } from './dtos/rate-sheet-update.dto';
 
@@ -41,6 +42,13 @@ export class RateSheetController {
   @UseSerializeInterceptor(RateSheetResponseDto)
   getOneById(@Param('id') id: string): Promise<RateSheet> {
     return this.rateSheetService.getOneById(+id);
+  }
+
+  @Get('/latest')
+  @UseAuthGuard()
+  @UseSerializeInterceptor(RateSheetResponseDto)
+  getLatest(@Query('type') type?: string) {
+    return this.rateSheetService.getLatestRate(type as FeeType);
   }
 
   @Post()

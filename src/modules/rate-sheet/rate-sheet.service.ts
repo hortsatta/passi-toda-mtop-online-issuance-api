@@ -15,6 +15,7 @@ import {
 
 import { FranchiseApprovalStatus } from '../franchise/enums/franchise.enum';
 import { FranchiseService } from '../franchise/franchise.service';
+import { FeeType } from './enums/rate-sheet.enum';
 import { RateSheet } from './entities/rate-sheet.entity';
 import { RateSheetCreateDto } from './dtos/rate-sheet-create.dto';
 import { RateSheetUpdateDto } from './dtos/rate-sheet-update.dto';
@@ -85,6 +86,14 @@ export class RateSheetService {
   getOneById(id: number): Promise<RateSheet> {
     return this.rateSheetRepo.findOne({
       where: { id },
+      relations: { rateSheetFees: true },
+    });
+  }
+
+  getLatestRate(feeType: FeeType): Promise<RateSheet> {
+    return this.rateSheetRepo.findOne({
+      where: { feeType },
+      order: { createdAt: 'DESC' },
       relations: { rateSheetFees: true },
     });
   }
