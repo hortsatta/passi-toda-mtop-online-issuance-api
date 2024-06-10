@@ -32,7 +32,7 @@ export class FranchiseController {
 
   @Get('/list/all')
   @UseAuthGuard([UserRole.Admin, UserRole.Issuer, UserRole.Member])
-  @UseFilterFieldsInterceptor(true)
+  @UseFilterFieldsInterceptor()
   @UseSerializeInterceptor(FranchiseResponseDto)
   getAllByMemberId(
     @CurrentUser() user: User,
@@ -57,7 +57,7 @@ export class FranchiseController {
 
   @Get(`${ISSUER_URL}/list/all`)
   @UseAuthGuard([UserRole.Admin, UserRole.Issuer])
-  @UseFilterFieldsInterceptor(true)
+  @UseFilterFieldsInterceptor()
   @UseSerializeInterceptor(FranchiseResponseDto)
   getAll(
     @Query('ids') ids?: string,
@@ -78,7 +78,6 @@ export class FranchiseController {
 
   @Get(`${ISSUER_URL}/list/digest`)
   @UseAuthGuard([UserRole.Admin, UserRole.Issuer])
-  @UseFilterFieldsInterceptor(true)
   @UseSerializeInterceptor(FranchiseDigestResponseDto)
   async getIssuerDigestList(): Promise<{
     pendingValidations: Franchise[];
@@ -129,6 +128,7 @@ export class FranchiseController {
 
   @Get('/:id')
   @UseAuthGuard([UserRole.Admin, UserRole.Issuer, UserRole.Member])
+  @UseFilterFieldsInterceptor()
   @UseSerializeInterceptor(FranchiseResponseDto)
   getOneById(
     @Param('id') id: string,

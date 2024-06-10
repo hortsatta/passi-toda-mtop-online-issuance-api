@@ -28,7 +28,7 @@ export class TodaAssociationController {
   ) {}
 
   @Get('/list/all')
-  @UseFilterFieldsInterceptor(true)
+  @UseFilterFieldsInterceptor()
   @UseSerializeInterceptor(TodaAssociationResponseDto)
   getAll(
     @CurrentUser() user: User,
@@ -51,6 +51,7 @@ export class TodaAssociationController {
 
   @Get('/:id')
   @UseAuthGuard([UserRole.Admin, UserRole.Issuer, UserRole.Member])
+  @UseFilterFieldsInterceptor()
   @UseSerializeInterceptor(TodaAssociationResponseDto)
   getOneById(@Param('id') id: string) {
     return this.todaAssociationService.getOneById(+id);

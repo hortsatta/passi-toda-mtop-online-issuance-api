@@ -90,6 +90,20 @@ export class RateSheetService {
     });
   }
 
+  async getLatestRates(feeTypes: FeeType[]): Promise<RateSheet[]> {
+    const results = await Promise.all(
+      feeTypes.map((feeType) =>
+        this.rateSheetRepo.findOne({
+          where: { feeType },
+          order: { createdAt: 'DESC' },
+          relations: { rateSheetFees: true },
+        }),
+      ),
+    );
+
+    return results.filter((rateSheet) => !!rateSheet);
+  }
+
   getLatestRate(feeType: FeeType): Promise<RateSheet> {
     return this.rateSheetRepo.findOne({
       where: { feeType },

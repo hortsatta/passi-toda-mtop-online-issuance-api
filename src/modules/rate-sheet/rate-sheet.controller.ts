@@ -20,13 +20,15 @@ import { FeeType } from './enums/rate-sheet.enum';
 import { RateSheetCreateDto } from './dtos/rate-sheet-create.dto';
 import { RateSheetUpdateDto } from './dtos/rate-sheet-update.dto';
 
+const FRANCHISE_URL = '/franchises';
+
 @Controller('rate-sheets')
 export class RateSheetController {
   constructor(private readonly rateSheetService: RateSheetService) {}
 
   @Get('/list/all')
   @UseAuthGuard()
-  @UseFilterFieldsInterceptor(true)
+  @UseFilterFieldsInterceptor()
   @UseSerializeInterceptor(RateSheetResponseDto)
   getAll(
     @Query('ids') ids?: string,
@@ -39,15 +41,25 @@ export class RateSheetController {
 
   @Get('/:id')
   @UseAuthGuard()
+  @UseFilterFieldsInterceptor()
   @UseSerializeInterceptor(RateSheetResponseDto)
   getOneById(@Param('id') id: string): Promise<RateSheet> {
     return this.rateSheetService.getOneById(+id);
   }
 
-  @Get('/latest')
+  @Get(`${FRANCHISE_URL}/list/latest`)
   @UseAuthGuard()
+  @UseFilterFieldsInterceptor()
   @UseSerializeInterceptor(RateSheetResponseDto)
-  getLatest(@Query('type') type?: string) {
+  getLatestRateSheetsByType(@Query('types') types: string) {
+    return this.rateSheetService.getLatestRates(types.split(',') as FeeType[]);
+  }
+
+  @Get(`${FRANCHISE_URL}/latest`)
+  @UseAuthGuard()
+  @UseFilterFieldsInterceptor()
+  @UseSerializeInterceptor(RateSheetResponseDto)
+  getLatestRateSheetByType(@Query('type') type?: string) {
     return this.rateSheetService.getLatestRate(type as FeeType);
   }
 

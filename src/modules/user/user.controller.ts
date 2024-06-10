@@ -38,7 +38,7 @@ export class UserController {
 
   @Get(`${MEMBER_URL}/:memberEmail`)
   @UseAuthGuard([UserRole.Admin, UserRole.Issuer])
-  @UseFilterFieldsInterceptor(true)
+  @UseFilterFieldsInterceptor()
   @UseSerializeInterceptor(UserResponseDto)
   async getMemberByEmail(@Param('memberEmail') email: string) {
     const user = await this.userService.findOneByEmail(email);
