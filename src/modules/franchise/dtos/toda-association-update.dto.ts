@@ -2,6 +2,7 @@ import { IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class TodaAssociationUpdateDto {
   @IsString()
+  @MaxLength(225)
   @IsOptional()
   name: string;
 

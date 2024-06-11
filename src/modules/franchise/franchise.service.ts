@@ -289,11 +289,16 @@ export class FranchiseService {
 
     await this.validateUpdateFranchise(id, memberId);
 
+    const franchise = await this.franchiseRepo.findOne({
+      where: { id, user: { id: memberId } },
+    });
+
     const mvFileNo = targetMvFileNo?.toLowerCase();
     const plateNo = targetPlateNo?.toLowerCase();
     const ownerDriverLicenseNo = targetOwnerDriverLicenseNo?.toLowerCase();
 
     return this.franchiseRepo.save({
+      ...franchise,
       ...moreFranchiseDto,
       ...(mvFileNo && { mvFileNo }),
       ...(plateNo && { plateNo }),

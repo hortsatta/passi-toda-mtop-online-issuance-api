@@ -100,10 +100,25 @@ export class TodaAssociationService {
       throw new BadRequestException('TODA Association name already taken');
     }
 
-    return this.todaAssociationRepo.save(todaAssociationDto);
+    const todaAssociation = await this.todaAssociationRepo.findOne({
+      where: { id },
+    });
+
+    return this.todaAssociationRepo.save({
+      ...todaAssociation,
+      ...todaAssociationDto,
+    });
   }
 
   async delete(id: number): Promise<boolean> {
+    const withFranchise = this.todaAssociationRepo.count({
+      where: { franchises: { todaAssociation: { id } } },
+    });
+
+    if (!withFranchise) {
+      throw new BadRequestException('Cannot delete associaiton');
+    }
+
     const result = await this.todaAssociationRepo.delete({ id });
 
     if (!result.affected) {

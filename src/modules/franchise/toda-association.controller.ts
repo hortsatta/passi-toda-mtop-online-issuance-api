@@ -50,7 +50,7 @@ export class TodaAssociationController {
   }
 
   @Get('/:id')
-  @UseAuthGuard([UserRole.Admin, UserRole.Issuer, UserRole.Member])
+  @UseAuthGuard()
   @UseFilterFieldsInterceptor()
   @UseSerializeInterceptor(TodaAssociationResponseDto)
   getOneById(@Param('id') id: string) {
@@ -65,7 +65,7 @@ export class TodaAssociationController {
   }
 
   @Patch('/:id')
-  @UseAuthGuard(UserRole.Member)
+  @UseAuthGuard(UserRole.Admin)
   @UseSerializeInterceptor(TodaAssociationResponseDto)
   update(
     @Param('id') id: string,
@@ -75,7 +75,7 @@ export class TodaAssociationController {
   }
 
   @Delete('/:id')
-  @UseAuthGuard(UserRole.Member)
+  @UseAuthGuard(UserRole.Admin)
   delete(@Param('id') id: string): Promise<boolean> {
     return this.todaAssociationService.delete(+id);
   }
