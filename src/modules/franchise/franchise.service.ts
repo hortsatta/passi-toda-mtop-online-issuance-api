@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
+  Equal,
   FindOptionsOrder,
   FindOptionsWhere,
   ILike,
@@ -221,6 +222,27 @@ export class FranchiseService {
 
   getOneById(id: number, memberId?: number): Promise<Franchise> {
     const where = memberId ? { id, user: { id: memberId } } : { id };
+    return this.franchiseRepo.findOne({
+      where,
+      relations: { user: true, todaAssociation: true },
+    });
+  }
+
+  checkOneByMvPlateNo(mvPlateNo: string): Promise<Franchise> {
+    const baseWhere: FindOptionsWhere<Franchise> = {
+      approvalStatus: Not(
+        In([
+          FranchiseApprovalStatus.Canceled,
+          FranchiseApprovalStatus.Rejected,
+        ]),
+      ),
+    };
+
+    const where = [
+      { mvFileNo: Equal(mvPlateNo), ...baseWhere },
+      { plateNo: Equal(mvPlateNo), ...baseWhere },
+    ];
+
     return this.franchiseRepo.findOne({
       where,
       relations: { user: true, todaAssociation: true },

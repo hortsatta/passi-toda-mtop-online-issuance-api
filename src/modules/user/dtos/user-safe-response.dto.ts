@@ -5,6 +5,9 @@ import { UserProfileSafeResponseDto } from './user-profile-safe-response.dto';
 
 export class UserSafeResponseDto extends BaseResponseDto {
   @Expose()
+  email: string;
+
+  @Expose()
   @Type(() => UserProfileSafeResponseDto)
   userProfile: UserProfileSafeResponseDto;
 }

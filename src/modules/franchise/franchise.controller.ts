@@ -138,6 +138,15 @@ export class FranchiseController {
     return this.franchiseService.getOneById(+id, memberId);
   }
 
+  @Get('/check/:mvPlateNo')
+  @UseFilterFieldsInterceptor()
+  @UseSerializeInterceptor(FranchiseResponseDto)
+  checkOneByMvPlateNo(
+    @Param('mvPlateNo') mvPlateNo: string,
+  ): Promise<Franchise | null> {
+    return this.franchiseService.checkOneByMvPlateNo(mvPlateNo);
+  }
+
   @Post('/validate')
   @UseAuthGuard(UserRole.Member)
   async validateUpsert(
