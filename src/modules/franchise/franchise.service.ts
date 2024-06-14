@@ -229,28 +229,24 @@ export class FranchiseService {
   }
 
   checkOneByMvPlateNo(mvPlateNo: string): Promise<Franchise> {
-    try {
-      const baseWhere: FindOptionsWhere<Franchise> = {
-        approvalStatus: Not(
-          In([
-            FranchiseApprovalStatus.Canceled,
-            FranchiseApprovalStatus.Rejected,
-          ]),
-        ),
-      };
+    const baseWhere: FindOptionsWhere<Franchise> = {
+      approvalStatus: Not(
+        In([
+          FranchiseApprovalStatus.Canceled,
+          FranchiseApprovalStatus.Rejected,
+        ]),
+      ),
+    };
 
-      const where = [
-        { mvFileNo: Equal(mvPlateNo), ...baseWhere },
-        { plateNo: Equal(mvPlateNo), ...baseWhere },
-      ];
+    const where = [
+      { mvFileNo: Equal(mvPlateNo), ...baseWhere },
+      { plateNo: Equal(mvPlateNo), ...baseWhere },
+    ];
 
-      return this.franchiseRepo.findOne({
-        where,
-        relations: { user: true, todaAssociation: true },
-      });
-    } catch (error) {
-      console.log(error);
-    }
+    return this.franchiseRepo.findOne({
+      where,
+      relations: { user: true, todaAssociation: true },
+    });
   }
 
   async validateUpsert(
