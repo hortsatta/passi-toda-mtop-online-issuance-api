@@ -144,6 +144,7 @@ export class FranchiseController {
   checkOneByMvPlateNo(
     @Param('mvPlateNo') mvPlateNo: string,
   ): Promise<Franchise | null> {
+    console.log('mvPlateNo', mvPlateNo);
     return this.franchiseService.checkOneByMvPlateNo(mvPlateNo);
   }
 
