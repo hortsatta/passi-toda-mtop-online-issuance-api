@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
+  Between,
   Equal,
   FindOptionsOrder,
   FindOptionsWhere,
@@ -217,6 +218,40 @@ export class FranchiseService {
       order: generateOrder(),
       ...takeOptions,
       relations: { todaAssociation: true },
+    });
+  }
+
+  getAllFranchisesByDateRange(
+    startDate: Date,
+    endDate: Date,
+    statuses?: FranchiseApprovalStatus[],
+  ): Promise<Franchise[]> {
+    const generateWhere = () => {
+      if (
+        statuses?.length &&
+        statuses.every(
+          (status) => status !== FranchiseApprovalStatus.PendingValidation,
+        )
+      ) {
+        return {
+          approvalDate: Between(startDate, endDate),
+        };
+      }
+
+      return [
+        {
+          createdAt: Between(startDate, endDate),
+        },
+        {
+          approvalDate: Between(startDate, endDate),
+        },
+      ];
+    };
+
+    return this.franchiseRepo.find({
+      where: generateWhere(),
+      order: { createdAt: 'ASC' },
+      relations: { user: true, todaAssociation: true },
     });
   }
 

@@ -8,6 +8,7 @@ import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import isBetween from 'dayjs/plugin/isBetween';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 
 // Initialize dayjs
 dayjs.extend(relativeTime);
@@ -28,6 +29,7 @@ dayjs.tz.setDefault('Asia/Manila');
 // Use checker methods
 dayjs.extend(isBetween);
 dayjs.extend(isSameOrBefore);
+dayjs.extend(isSameOrAfter);
 
 const tzDayjs = (...args: any[]) => {
   return dayjs(...args).tz();

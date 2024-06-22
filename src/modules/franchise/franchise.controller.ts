@@ -22,7 +22,10 @@ import { FranchiseService } from './franchise.service';
 import { FranchiseResponseDto } from './dtos/franchise-response.dto';
 import { FranchiseCreateDto } from './dtos/franchise-create.dto';
 import { FranchiseUpdateDto } from './dtos/franchise-update.dto';
-import { FranchiseDigestResponseDto } from './dtos/franchise-digest-response.dto';
+import {
+  FranchiseDigest,
+  FranchiseDigestResponseDto,
+} from './dtos/franchise-digest-response.dto';
 
 const ISSUER_URL = '/issuer';
 
@@ -79,12 +82,7 @@ export class FranchiseController {
   @Get(`${ISSUER_URL}/list/digest`)
   @UseAuthGuard([UserRole.Admin, UserRole.Issuer])
   @UseSerializeInterceptor(FranchiseDigestResponseDto)
-  async getIssuerDigestList(): Promise<{
-    pendingValidations: Franchise[];
-    pendingPayments: Franchise[];
-    recentApprovals: Franchise[];
-    recentRejections: Franchise[];
-  }> {
+  async getIssuerDigestList(): Promise<FranchiseDigest> {
     const sort = 'approvalDate:DESC';
     const take = 10;
 
