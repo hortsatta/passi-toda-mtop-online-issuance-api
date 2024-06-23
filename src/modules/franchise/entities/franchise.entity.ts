@@ -2,6 +2,7 @@ import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 import { Base as BaseEntity } from '#/common/entities/base-entity';
 import { User } from '#/modules/user/entities/user.entity';
+import { DriverProfile } from '#/modules/user/entities/driver-profile.entity';
 import { FranchiseApprovalStatus } from '../enums/franchise.enum';
 import { TodaAssociation } from './toda-association.entity';
 
@@ -13,9 +14,6 @@ export class Franchise extends BaseEntity {
   @Column({ type: 'varchar', length: 7 })
   plateNo: string;
 
-  @Column({ type: 'varchar', length: 11 })
-  ownerDriverLicenseNo: string;
-
   @Column({ type: 'text' })
   vehicleORImgUrl: string;
 
@@ -26,12 +24,12 @@ export class Franchise extends BaseEntity {
   todaAssocMembershipImgUrl: string;
 
   @Column({ type: 'text' })
-  ownerDriverLicenseNoImgUrl: string;
+  driverLicenseNoImgUrl: string;
 
   @Column({ type: 'text' })
   brgyClearanceImgUrl: string;
 
-  @Column({ type: 'text' })
+  @Column({ type: 'text', nullable: true })
   voterRegRecordImgUrl: string;
 
   @Column({
@@ -53,6 +51,15 @@ export class Franchise extends BaseEntity {
   )
   @JoinColumn()
   todaAssociation: TodaAssociation;
+
+  @Column({ type: 'boolean' })
+  isDriverOwner: boolean;
+
+  @ManyToOne(() => DriverProfile, (driverProfile) => driverProfile.franchises, {
+    nullable: true,
+  })
+  @JoinColumn()
+  driverProfile: DriverProfile;
 
   @ManyToOne(() => User, (user) => user.franchises)
   @JoinColumn()

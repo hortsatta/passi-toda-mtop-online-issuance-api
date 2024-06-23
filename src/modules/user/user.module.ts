@@ -6,15 +6,18 @@ import { JwtModule } from '@nestjs/jwt';
 import { CurrentUserMiddleware } from './middlewares/current-user.middleware';
 import { UserProfile } from './entities/user-profile.entity';
 import { User } from './entities/user.entity';
-import { UserController } from './user.controller';
+import { DriverProfile } from './entities/driver-profile.entity';
+import { UserController } from './controllers/user.controller';
+import { AuthController } from './controllers/auth.controller';
+import { DriverProfileController } from './controllers/driver-profile.controller';
 import { UserSubscriber } from './subscribers/user.subscriber';
-import { UserService } from './user.service';
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
+import { AuthService } from './services/auth.service';
+import { UserService } from './services/user.service';
+import { DriverProfileService } from './services/driver-profile.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, UserProfile]),
+    TypeOrmModule.forFeature([User, UserProfile, DriverProfile]),
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
@@ -24,9 +27,9 @@ import { AuthService } from './auth.service';
       }),
     }),
   ],
-  controllers: [UserController, AuthController],
-  providers: [UserSubscriber, UserService, AuthService],
-  exports: [UserService],
+  controllers: [UserController, AuthController, DriverProfileController],
+  providers: [UserSubscriber, UserService, AuthService, DriverProfileService],
+  exports: [UserService, DriverProfileService],
 })
 export class UserModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

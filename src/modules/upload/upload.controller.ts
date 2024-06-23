@@ -30,7 +30,7 @@ export class UploadController {
     vehicleORImgUrl?: string;
     vehicleCRImgUrl?: string;
     todaAssocMembershipImgUrl?: string;
-    ownerDriverLicenseNoImgUrl?: string;
+    driverLicenseNoImgUrl?: string;
     brgyClearanceImgUrl?: string;
     voterRegRecordImgUrl?: string;
   }> {

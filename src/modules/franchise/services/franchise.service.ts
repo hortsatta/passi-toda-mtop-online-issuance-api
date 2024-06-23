@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -17,11 +18,12 @@ import {
   Repository,
 } from 'typeorm';
 
-import { FranchiseApprovalStatus } from './enums/franchise.enum';
-import { Franchise } from './entities/franchise.entity';
-import { TodaAssociation } from './entities/toda-association.entity';
-import { FranchiseCreateDto } from './dtos/franchise-create.dto';
-import { FranchiseUpdateDto } from './dtos/franchise-update.dto';
+import { DriverProfileService } from '#/modules/user/services/driver-profile.service';
+import { FranchiseApprovalStatus } from '../enums/franchise.enum';
+import { Franchise } from '../entities/franchise.entity';
+import { TodaAssociation } from '../entities/toda-association.entity';
+import { FranchiseCreateDto } from '../dtos/franchise-create.dto';
+import { FranchiseUpdateDto } from '../dtos/franchise-update.dto';
 
 @Injectable()
 export class FranchiseService {
@@ -30,13 +32,22 @@ export class FranchiseService {
     private readonly franchiseRepo: Repository<Franchise>,
     @InjectRepository(TodaAssociation)
     private readonly todaAssociationRepo: Repository<TodaAssociation>,
+    @Inject(DriverProfileService)
+    private readonly driverProfileService: DriverProfileService,
   ) {}
 
   async validateCreateFranchise(
     franchiseDto: FranchiseCreateDto,
     memberId: number,
   ) {
-    const { mvFileNo, plateNo, todaAssociationId } = franchiseDto;
+    const {
+      mvFileNo,
+      plateNo,
+      todaAssociationId,
+      driverProfileId,
+      driverProfile,
+      isDriverOwner,
+    } = franchiseDto;
 
     const existingFranchise = await this.franchiseRepo.findOne({
       where: [{ mvFileNo }, { plateNo }],
@@ -47,14 +58,27 @@ export class FranchiseService {
       where: { id: todaAssociationId },
     });
 
+    if (!isDriverOwner && driverProfileId != null) {
+      const driverProfile = await this.driverProfileService.getOneById(
+        driverProfileId,
+        memberId,
+      );
+
+      if (!driverProfile) {
+        throw new BadRequestException('Driver does not exist');
+      }
+    } else if (driverProfileId == null && driverProfile == null) {
+      throw new BadRequestException('Driver is required');
+    }
+
     if (existingFranchise?.user.id === memberId) {
       throw new BadRequestException('Vehicle already exist');
     }
 
     if (
       existingFranchise?.approvalStatus === FranchiseApprovalStatus.Approved ||
-      existingFranchise?.approvalStatus ===
-        FranchiseApprovalStatus.PendingPayment
+      existingFranchise?.approvalStatus === FranchiseApprovalStatus.Paid ||
+      existingFranchise?.approvalStatus === FranchiseApprovalStatus.Validated
     ) {
       throw new BadRequestException('Vehicle already registered');
     } else if (!todaAssociation) {
@@ -80,7 +104,8 @@ export class FranchiseService {
     const baseWhere = {
       id: Not(id),
       approvalStatus: In([
-        FranchiseApprovalStatus.PendingPayment,
+        FranchiseApprovalStatus.Validated,
+        FranchiseApprovalStatus.Paid,
         FranchiseApprovalStatus.Approved,
       ]),
     };
@@ -157,7 +182,11 @@ export class FranchiseService {
       where: generateWhere(),
       order: generateOrder(),
       ...takeOptions,
-      relations: { todaAssociation: true, user: true },
+      relations: {
+        user: true,
+        driverProfile: true,
+        todaAssociation: true,
+      },
     });
   }
 
@@ -217,7 +246,7 @@ export class FranchiseService {
       where: generateWhere(),
       order: generateOrder(),
       ...takeOptions,
-      relations: { todaAssociation: true },
+      relations: { todaAssociation: true, driverProfile: true },
     });
   }
 
@@ -251,7 +280,11 @@ export class FranchiseService {
     return this.franchiseRepo.find({
       where: generateWhere(),
       order: { createdAt: 'ASC' },
-      relations: { user: true, todaAssociation: true },
+      relations: {
+        user: true,
+        driverProfile: true,
+        todaAssociation: true,
+      },
     });
   }
 
@@ -259,7 +292,28 @@ export class FranchiseService {
     const where = memberId ? { id, user: { id: memberId } } : { id };
     return this.franchiseRepo.findOne({
       where,
-      relations: { user: true, todaAssociation: true },
+      relations: {
+        user: true,
+        driverProfile: true,
+        todaAssociation: true,
+      },
+    });
+  }
+
+  getOneByIdAsTreasurer(id: number): Promise<Franchise> {
+    return this.franchiseRepo.findOne({
+      where: {
+        id,
+        approvalStatus: In([
+          FranchiseApprovalStatus.Validated,
+          FranchiseApprovalStatus.Paid,
+        ]),
+      },
+      relations: {
+        user: true,
+        driverProfile: true,
+        todaAssociation: true,
+      },
     });
   }
 
@@ -280,7 +334,11 @@ export class FranchiseService {
 
     return this.franchiseRepo.findOne({
       where,
-      relations: { user: true, todaAssociation: true },
+      relations: {
+        user: true,
+        driverProfile: true,
+        todaAssociation: true,
+      },
     });
   }
 
@@ -308,8 +366,10 @@ export class FranchiseService {
     const {
       mvFileNo: targetMvFileNo,
       plateNo: targetPlateNo,
-      ownerDriverLicenseNo: targetOwnerDriverLicenseNo,
       todaAssociationId,
+      driverProfile: newDriverProfile,
+      driverProfileId,
+      isDriverOwner,
       ...moreFranchiseDto
     } = franchiseDto;
 
@@ -317,14 +377,27 @@ export class FranchiseService {
 
     const mvFileNo = targetMvFileNo.toLowerCase();
     const plateNo = targetPlateNo.toLowerCase();
-    const ownerDriverLicenseNo = targetOwnerDriverLicenseNo.toLowerCase();
+
+    let driverProfile = null;
+
+    if (!isDriverOwner) {
+      if (driverProfileId != null) {
+        driverProfile = { id: driverProfileId };
+      } else if (newDriverProfile != null) {
+        driverProfile = await this.driverProfileService.create(
+          newDriverProfile,
+          memberId,
+        );
+      }
+    }
 
     const franchise = this.franchiseRepo.create({
       ...moreFranchiseDto,
       mvFileNo,
       plateNo,
-      ownerDriverLicenseNo,
       todaAssociation: { id: todaAssociationId },
+      isDriverOwner,
+      driverProfile,
       user: { id: memberId },
     });
 
@@ -339,7 +412,6 @@ export class FranchiseService {
     const {
       mvFileNo: targetMvFileNo,
       plateNo: targetPlateNo,
-      ownerDriverLicenseNo: targetOwnerDriverLicenseNo,
       todaAssociationId,
       ...moreFranchiseDto
     } = franchiseDto;
@@ -352,14 +424,12 @@ export class FranchiseService {
 
     const mvFileNo = targetMvFileNo?.toLowerCase();
     const plateNo = targetPlateNo?.toLowerCase();
-    const ownerDriverLicenseNo = targetOwnerDriverLicenseNo?.toLowerCase();
 
     return this.franchiseRepo.save({
       ...franchise,
       ...moreFranchiseDto,
       ...(mvFileNo && { mvFileNo }),
       ...(plateNo && { plateNo }),
-      ...(ownerDriverLicenseNo && { ownerDriverLicenseNo }),
       todaAssociation: { id: todaAssociationId },
     });
   }
@@ -377,9 +447,12 @@ export class FranchiseService {
     if (!approvalStatus) {
       switch (franchise.approvalStatus) {
         case FranchiseApprovalStatus.PendingValidation:
-          updatedApprovalStatus = FranchiseApprovalStatus.PendingPayment;
+          updatedApprovalStatus = FranchiseApprovalStatus.Validated;
           break;
-        case FranchiseApprovalStatus.PendingPayment:
+        case FranchiseApprovalStatus.Validated:
+          updatedApprovalStatus = FranchiseApprovalStatus.Paid;
+          break;
+        case FranchiseApprovalStatus.Paid:
           updatedApprovalStatus = FranchiseApprovalStatus.Approved;
           break;
       }
@@ -392,7 +465,11 @@ export class FranchiseService {
 
     return this.franchiseRepo.findOne({
       where: { id },
-      relations: { todaAssociation: true, user: true },
+      relations: {
+        user: true,
+        driverProfile: true,
+        todaAssociation: true,
+      },
     });
   }
 

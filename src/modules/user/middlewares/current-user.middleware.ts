@@ -4,7 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { JwtPayload } from 'jsonwebtoken';
 
-import { UserService } from '../user.service';
+import { UserService } from '../services/user.service';
 
 @Injectable()
 export class CurrentUserMiddleware implements NestMiddleware {

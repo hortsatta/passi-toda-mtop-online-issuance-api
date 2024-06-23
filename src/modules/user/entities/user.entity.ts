@@ -4,6 +4,7 @@ import { Base as BaseEntity } from '#/common/entities/base-entity';
 import { Franchise } from '#/modules/franchise/entities/franchise.entity';
 import { UserApprovalStatus, UserRole } from '../enums/user.enum';
 import { UserProfile } from './user-profile.entity';
+import { DriverProfile } from './driver-profile.entity';
 
 @Entity()
 export class User extends BaseEntity {
@@ -40,4 +41,7 @@ export class User extends BaseEntity {
 
   @OneToMany(() => Franchise, (franchise) => franchise.user)
   franchises: Franchise[];
+
+  @OneToMany(() => DriverProfile, (driverProfile) => driverProfile.user)
+  drivers: DriverProfile[];
 }

@@ -1,10 +1,12 @@
-import { Expose, Type } from 'class-transformer';
+import { Expose } from 'class-transformer';
 
 import { BaseResponseDto } from '#/common/dtos/base-response.dto';
 import { UserCivilStatus, UserGender } from '../enums/user.enum';
-import { UserResponseDto } from './user-response.dto';
 
-export class UserProfileResponseDto extends BaseResponseDto {
+export class DriverProfileResponseDto extends BaseResponseDto {
+  @Expose()
+  email: string;
+
   @Expose()
   firstName: string;
 
@@ -34,8 +36,4 @@ export class UserProfileResponseDto extends BaseResponseDto {
 
   @Expose()
   driverLicenseNo: string;
-
-  @Expose()
-  @Type(() => UserResponseDto)
-  user: UserResponseDto;
 }

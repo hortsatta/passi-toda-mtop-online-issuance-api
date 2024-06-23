@@ -7,11 +7,11 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { encryptPassword } from './helpers/password.helper';
-import { UserApprovalStatus, UserRole } from './enums/user.enum';
-import { User } from './entities/user.entity';
-import { UserCreateDto } from './dtos/user-create.dto';
-import { UserUpdateDto } from './dtos/user-update.dto';
+import { encryptPassword } from '../helpers/password.helper';
+import { UserApprovalStatus, UserRole } from '../enums/user.enum';
+import { User } from '../entities/user.entity';
+import { UserCreateDto } from '../dtos/user-create.dto';
+import { UserUpdateDto } from '../dtos/user-update.dto';
 
 @Injectable()
 export class UserService {

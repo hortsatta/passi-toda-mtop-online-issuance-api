@@ -14,9 +14,9 @@ import {
   Not,
 } from 'typeorm';
 
-import { TodaAssociation } from './entities/toda-association.entity';
-import { TodaAssociationCreateDto } from './dtos/toda-association-create.dto';
-import { TodaAssociationUpdateDto } from './dtos/toda-association-update.dto';
+import { TodaAssociation } from '../entities/toda-association.entity';
+import { TodaAssociationCreateDto } from '../dtos/toda-association-create.dto';
+import { TodaAssociationUpdateDto } from '../dtos/toda-association-update.dto';
 
 @Injectable()
 export class TodaAssociationService {

@@ -12,18 +12,19 @@ import {
 
 import { UseSerializeInterceptor } from '#/common/interceptors/serialize.interceptor';
 import { UseFilterFieldsInterceptor } from '#/common/interceptors/filter-fields.interceptor';
-import { UserService } from './user.service';
-import { UserApprovalStatus, UserRole } from './enums/user.enum';
-import { CurrentUser } from './decorators/current-user.decorator';
-import { UseAuthGuard } from './guards/auth.guard';
-import { User } from './entities/user.entity';
-import { UserCreateDto } from './dtos/user-create.dto';
-import { UserUpdateDto } from './dtos/user-update.dto';
-import { UserResponseDto } from './dtos/user-response.dto';
+import { UserService } from '../services/user.service';
+import { UserApprovalStatus, UserRole } from '../enums/user.enum';
+import { CurrentUser } from '../decorators/current-user.decorator';
+import { UseAuthGuard } from '../guards/auth.guard';
+import { User } from '../entities/user.entity';
+import { UserCreateDto } from '../dtos/user-create.dto';
+import { UserUpdateDto } from '../dtos/user-update.dto';
+import { UserResponseDto } from '../dtos/user-response.dto';
 
-const ADMIN_URL = '/admins';
-const ISSUER_URL = '/issuers';
 const MEMBER_URL = '/members';
+const TREASURER_URL = '/treasurers';
+const ISSUER_URL = '/issuers';
+const ADMIN_URL = '/admins';
 
 @Controller('users')
 export class UserController {
@@ -53,12 +54,9 @@ export class UserController {
   }
 
   @Patch()
-  @UseAuthGuard([UserRole.Admin, UserRole.Issuer, UserRole.Member])
+  @UseAuthGuard()
   @UseSerializeInterceptor(UserResponseDto)
-  updateCurrentAdminUser(
-    @Body() body: UserUpdateDto,
-    @CurrentUser() user: User,
-  ) {
+  updateCurrentUser(@Body() body: UserUpdateDto, @CurrentUser() user: User) {
     return this.userService.update(user.id, body);
   }
 
@@ -131,6 +129,14 @@ export class UserController {
     }
 
     return this.userService.update(+id, body);
+  }
+
+  // TREASURER
+
+  @Post(`${TREASURER_URL}/register`)
+  @UseSerializeInterceptor(UserResponseDto)
+  registerTreasurer(@Body() body: UserCreateDto): Promise<User> {
+    return this.userService.create(body, UserRole.Treasurer);
   }
 
   // MEMBER

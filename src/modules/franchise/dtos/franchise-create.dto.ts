@@ -1,11 +1,16 @@
+import { Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsInt,
   IsOptional,
   IsPositive,
   IsString,
   MaxLength,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
+
+import { DriverProfileCreateDto } from '#/modules/user/dtos/driver-profile-create.dto';
 
 export class FranchiseCreateDto {
   @IsString()
@@ -19,11 +24,6 @@ export class FranchiseCreateDto {
   plateNo: string;
 
   @IsString()
-  @MinLength(11)
-  @MaxLength(11)
-  ownerDriverLicenseNo: string;
-
-  @IsString()
   vehicleORImgUrl: string;
 
   @IsString()
@@ -33,7 +33,7 @@ export class FranchiseCreateDto {
   todaAssocMembershipImgUrl: string;
 
   @IsString()
-  ownerDriverLicenseNoImgUrl: string;
+  driverLicenseNoImgUrl: string;
 
   @IsString()
   brgyClearanceImgUrl: string;
@@ -45,4 +45,17 @@ export class FranchiseCreateDto {
   @IsInt()
   @IsPositive()
   todaAssociationId: number;
+
+  @IsBoolean()
+  isDriverOwner: boolean;
+
+  @ValidateNested({ each: true })
+  @Type(() => DriverProfileCreateDto)
+  @IsOptional()
+  driverProfile: DriverProfileCreateDto;
+
+  @IsInt()
+  @IsPositive()
+  @IsOptional()
+  driverProfileId: number;
 }

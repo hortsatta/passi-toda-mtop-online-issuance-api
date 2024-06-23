@@ -1,19 +1,25 @@
+import { Type } from 'class-transformer';
 import {
-  IsString,
+  IsEmail,
   MaxLength,
   IsOptional,
+  IsString,
   IsDate,
   MaxDate,
   IsPhoneNumber,
   IsEnum,
   MinLength,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 
 import dayjs from '#/common/config/dayjs.config';
 import { UserCivilStatus, UserGender } from '../enums/user.enum';
 
-export class UserProfileUpdateDto {
+export class DriverProfileUpdateDto {
+  @IsEmail()
+  @MaxLength(255)
+  @IsOptional()
+  email: string;
+
   @IsString()
   @MaxLength(50)
   @IsOptional()

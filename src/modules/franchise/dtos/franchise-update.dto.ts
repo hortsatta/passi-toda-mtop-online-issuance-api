@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsInt,
   IsOptional,
   IsPositive,
@@ -20,12 +21,6 @@ export class FranchiseUpdateDto {
   plateNo: string;
 
   @IsString()
-  @MinLength(11)
-  @MaxLength(11)
-  @IsOptional()
-  ownerDriverLicenseNo: string;
-
-  @IsString()
   @IsOptional()
   vehicleORImgUrl: string;
 
@@ -39,7 +34,7 @@ export class FranchiseUpdateDto {
 
   @IsString()
   @IsOptional()
-  ownerDriverLicenseNoImgUrl: string;
+  driverLicenseNoImgUrl: string;
 
   @IsString()
   @IsOptional()
@@ -53,4 +48,13 @@ export class FranchiseUpdateDto {
   @IsPositive()
   @IsOptional()
   todaAssociationId: number;
+
+  @IsBoolean()
+  @IsOptional()
+  isDriverOwner: boolean;
+
+  @IsInt()
+  @IsPositive()
+  @IsOptional()
+  driverProfileId: number;
 }

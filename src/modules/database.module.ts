@@ -5,6 +5,7 @@ import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
 import { User } from './user/entities/user.entity';
 import { UserProfile } from './user/entities/user-profile.entity';
+import { DriverProfile } from './user/entities/driver-profile.entity';
 import { Franchise } from './franchise/entities/franchise.entity';
 import { TodaAssociation } from './franchise/entities/toda-association.entity';
 import { RateSheet } from './rate-sheet/entities/rate-sheet.entity';
@@ -35,6 +36,7 @@ import { RateSheetFee } from './rate-sheet/entities/rate-sheet-fee.entity';
           entities: [
             User,
             UserProfile,
+            DriverProfile,
             Franchise,
             TodaAssociation,
             RateSheet,

@@ -10,7 +10,11 @@ export class FranchiseDigestResponseDto {
 
   @Expose()
   @Type(() => FranchiseResponseDto)
-  pendingPayments: FranchiseResponseDto[];
+  validatedList: FranchiseResponseDto[];
+
+  @Expose()
+  @Type(() => FranchiseResponseDto)
+  paidList: FranchiseResponseDto[];
 
   @Expose()
   @Type(() => FranchiseResponseDto)
@@ -23,7 +27,8 @@ export class FranchiseDigestResponseDto {
 
 export type FranchiseDigest = {
   pendingValidations: Franchise[];
-  pendingPayments: Franchise[];
+  validatedList: Franchise[];
+  paidList: Franchise[];
   recentApprovals: Franchise[];
   recentRejections: Franchise[];
 };

@@ -11,7 +11,7 @@ import {
 import { Type } from 'class-transformer';
 
 import dayjs from '#/common/config/dayjs.config';
-import { UserGender } from '../enums/user.enum';
+import { UserCivilStatus, UserGender } from '../enums/user.enum';
 
 export class UserProfileCreateDto {
   @IsString()
@@ -33,6 +33,16 @@ export class UserProfileCreateDto {
 
   @IsEnum(UserGender)
   gender: UserGender;
+
+  @IsEnum(UserCivilStatus)
+  civilStatus: UserCivilStatus;
+
+  @IsString()
+  @MaxLength(255)
+  religion: string;
+
+  @IsString()
+  address: string;
 
   @IsString()
   @MaxLength(50)

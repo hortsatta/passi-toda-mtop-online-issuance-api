@@ -14,7 +14,7 @@ import {
 } from 'typeorm';
 
 import { FranchiseApprovalStatus } from '../franchise/enums/franchise.enum';
-import { FranchiseService } from '../franchise/franchise.service';
+import { FranchiseService } from '../franchise/services/franchise.service';
 import { FeeType } from './enums/rate-sheet.enum';
 import { RateSheet } from './entities/rate-sheet.entity';
 import { RateSheetCreateDto } from './dtos/rate-sheet-create.dto';

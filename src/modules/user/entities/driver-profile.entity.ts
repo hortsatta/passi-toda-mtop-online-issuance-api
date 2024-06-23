@@ -1,11 +1,15 @@
-import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 
 import { Base as BaseEntity } from '#/common/entities/base-entity';
+import { Franchise } from '#/modules/franchise/entities/franchise.entity';
 import { UserCivilStatus, UserGender } from '../enums/user.enum';
 import { User } from './user.entity';
 
 @Entity()
-export class UserProfile extends BaseEntity {
+export class DriverProfile extends BaseEntity {
+  @Column({ type: 'varchar', length: 255, unique: true, nullable: true })
+  email: string;
+
   @Column({ type: 'varchar', length: 50 })
   firstName: string;
 
@@ -42,7 +46,10 @@ export class UserProfile extends BaseEntity {
   @Column({ type: 'varchar', length: 11, nullable: true })
   driverLicenseNo: string;
 
-  @OneToOne(() => User, (user) => user.userProfile, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, (user) => user.drivers)
   @JoinColumn()
   user: User;
+
+  @OneToMany(() => Franchise, (franchise) => franchise.driverProfile)
+  franchises: Franchise[];
 }

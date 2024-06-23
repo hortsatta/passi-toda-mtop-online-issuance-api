@@ -4,10 +4,10 @@ import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
 
 import dayjs from '#/common/config/dayjs.config';
-import { validatePassword } from './helpers/password.helper';
-import { UserApprovalStatus } from './enums/user.enum';
-import { User } from './entities/user.entity';
-import { AuthSignInDto } from './dtos/auth-sign-in.dto';
+import { validatePassword } from '../helpers/password.helper';
+import { UserApprovalStatus } from '../enums/user.enum';
+import { User } from '../entities/user.entity';
+import { AuthSignInDto } from '../dtos/auth-sign-in.dto';
 
 @Injectable()
 export class AuthService {

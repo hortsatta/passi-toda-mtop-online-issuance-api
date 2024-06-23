@@ -1,6 +1,7 @@
 export enum FranchiseApprovalStatus {
   PendingValidation = 'pending-validation',
-  PendingPayment = 'pending-payment',
+  Validated = 'validated',
+  Paid = 'paid',
   Approved = 'approved',
   Rejected = 'rejected',
   Canceled = 'canceled',

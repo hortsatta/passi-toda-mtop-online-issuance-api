@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 import dayjs from '#/common/config/dayjs.config';
 import { FranchiseApprovalStatus } from '../franchise/enums/franchise.enum';
-import { FranchiseService } from '../franchise/franchise.service';
+import { FranchiseService } from '../franchise/services/franchise.service';
 import { ReportFranchiseIssuance } from './dtos/report-franchise-issuance-response.dto';
 
 @Injectable()
@@ -36,9 +36,13 @@ export class ReportService {
         franchise.approvalStatus === FranchiseApprovalStatus.PendingValidation,
     ).length;
 
-    const totalPendingPaymentCount = franchisesWithApprovalDate.filter(
+    const totalValidatedCount = franchisesWithApprovalDate.filter(
       (franchise) =>
-        franchise.approvalStatus === FranchiseApprovalStatus.PendingPayment,
+        franchise.approvalStatus === FranchiseApprovalStatus.Validated,
+    ).length;
+
+    const totalPaidCount = franchisesWithApprovalDate.filter(
+      (franchise) => franchise.approvalStatus === FranchiseApprovalStatus.Paid,
     ).length;
 
     const totalApprovalCount = franchisesWithApprovalDate.filter(
@@ -59,7 +63,8 @@ export class ReportService {
     return {
       totalApplicationCount: totalApplication.length,
       totalPendingValidationCount,
-      totalPendingPaymentCount,
+      totalValidatedCount,
+      totalPaidCount,
       totalApprovalCount,
       totalRejectedCount,
       totalCanceledCount,

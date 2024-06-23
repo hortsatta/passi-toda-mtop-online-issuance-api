@@ -15,7 +15,7 @@ export class ReportController {
   constructor(private readonly reportService: ReportService) {}
 
   @Get('/franchises')
-  @UseAuthGuard([UserRole.Admin, UserRole.Issuer])
+  @UseAuthGuard([UserRole.Admin, UserRole.Issuer, UserRole.Treasurer])
   @UseSerializeInterceptor(ReportFranchiseIssuanceResponseDto)
   async getFranchiseIssuanceByDateRange(
     @Query('startDate') startDate?: string,

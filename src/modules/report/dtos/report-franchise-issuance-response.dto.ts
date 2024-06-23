@@ -8,7 +8,10 @@ export class ReportFranchiseIssuanceResponseDto {
   totalPendingValidationCount: number;
 
   @Expose()
-  totalPendingPaymentCount: number;
+  totalValidatedCount: number;
+
+  @Expose()
+  totalPaidCount: number;
 
   @Expose()
   totalApprovalCount: number;
@@ -23,7 +26,8 @@ export class ReportFranchiseIssuanceResponseDto {
 export type ReportFranchiseIssuance = {
   totalApplicationCount: number;
   totalPendingValidationCount: number;
-  totalPendingPaymentCount: number;
+  totalValidatedCount: number;
+  totalPaidCount: number;
   totalApprovalCount: number;
   totalRejectedCount: number;
   totalCanceledCount: number;

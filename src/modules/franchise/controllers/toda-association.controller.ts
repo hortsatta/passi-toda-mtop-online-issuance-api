@@ -11,15 +11,15 @@ import {
 
 import { UseFilterFieldsInterceptor } from '#/common/interceptors/filter-fields.interceptor';
 import { UseSerializeInterceptor } from '#/common/interceptors/serialize.interceptor';
-import { CurrentUser } from '../user/decorators/current-user.decorator';
-import { UserRole } from '../user/enums/user.enum';
-import { UseAuthGuard } from '../user/guards/auth.guard';
-import { User } from '../user/entities/user.entity';
-import { TodaAssociationService } from './toda-association.service';
-import { TodaAssociation } from './entities/toda-association.entity';
-import { TodaAssociationResponseDto } from './dtos/toda-association-response.dto';
-import { TodaAssociationCreateDto } from './dtos/toda-association-create.dto';
-import { TodaAssociationUpdateDto } from './dtos/toda-association-update.dto';
+import { CurrentUser } from '#/modules/user/decorators/current-user.decorator';
+import { UserRole } from '#/modules/user/enums/user.enum';
+import { UseAuthGuard } from '#/modules/user/guards/auth.guard';
+import { User } from '#/modules/user/entities/user.entity';
+import { TodaAssociationService } from '../services/toda-association.service';
+import { TodaAssociation } from '../entities/toda-association.entity';
+import { TodaAssociationResponseDto } from '../dtos/toda-association-response.dto';
+import { TodaAssociationCreateDto } from '../dtos/toda-association-create.dto';
+import { TodaAssociationUpdateDto } from '../dtos/toda-association-update.dto';
 
 @Controller('toda-associations')
 export class TodaAssociationController {

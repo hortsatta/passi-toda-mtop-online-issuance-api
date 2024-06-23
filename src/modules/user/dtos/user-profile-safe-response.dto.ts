@@ -1,7 +1,7 @@
 import { Expose } from 'class-transformer';
 
 import { BaseResponseDto } from '#/common/dtos/base-response.dto';
-import { UserGender } from '../enums/user.enum';
+import { UserCivilStatus, UserGender } from '../enums/user.enum';
 
 export class UserProfileSafeResponseDto extends BaseResponseDto {
   @Expose()
@@ -21,6 +21,15 @@ export class UserProfileSafeResponseDto extends BaseResponseDto {
 
   @Expose()
   gender: UserGender;
+
+  @Expose()
+  civilStatus: UserCivilStatus;
+
+  @Expose()
+  religion: string;
+
+  @Expose()
+  address: string;
 
   @Expose()
   driverLicenseNo: string;
