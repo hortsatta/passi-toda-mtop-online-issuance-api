@@ -10,3 +10,9 @@ export abstract class BaseResponseDto {
   @Expose()
   updatedAt: string;
 }
+
+export type BaseResponse = {
+  id: number;
+  createdAt: Date;
+  updatedAt: Date;
+};

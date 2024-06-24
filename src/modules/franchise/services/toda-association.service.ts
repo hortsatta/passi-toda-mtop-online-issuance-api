@@ -14,9 +14,11 @@ import {
   Not,
 } from 'typeorm';
 
+import { FranchiseApprovalStatus } from '../enums/franchise.enum';
 import { TodaAssociation } from '../entities/toda-association.entity';
 import { TodaAssociationCreateDto } from '../dtos/toda-association-create.dto';
 import { TodaAssociationUpdateDto } from '../dtos/toda-association-update.dto';
+import { TodaAssociationResponse } from '../dtos/toda-association-response.dto';
 
 @Injectable()
 export class TodaAssociationService {
@@ -25,12 +27,12 @@ export class TodaAssociationService {
     private readonly todaAssociationRepo: Repository<TodaAssociation>,
   ) {}
 
-  getAllTodaAssociations(
+  async getAllTodaAssociations(
     sort?: string,
     todaAssociationIds?: number[],
     q?: string,
     withFranchise?: boolean,
-  ): Promise<TodaAssociation[]> {
+  ): Promise<TodaAssociationResponse[]> {
     const generateWhere = () => {
       let baseWhere: FindOptionsWhere<TodaAssociation> = {};
 
@@ -59,18 +61,53 @@ export class TodaAssociationService {
       return { [sortBy]: sortOrder };
     };
 
-    return this.todaAssociationRepo.find({
+    const todaAssociations = await this.todaAssociationRepo.find({
       where: generateWhere(),
       order: generateOrder(),
       relations: { franchises: withFranchise },
     });
+
+    if (!withFranchise) return todaAssociations as TodaAssociationResponse[];
+
+    return todaAssociations.map(({ franchises, ...moreTodaAssocation }) => {
+      const franchiseCount = franchises.filter(
+        (franchise) =>
+          franchise.approvalStatus === FranchiseApprovalStatus.Approved,
+      ).length;
+
+      return { ...moreTodaAssocation, franchiseCount };
+    });
   }
 
-  getOneById(id: number, withFranchise?: boolean): Promise<TodaAssociation> {
-    return this.todaAssociationRepo.findOne({
+  async getOneById(
+    id: number,
+    withFranchise?: boolean,
+  ): Promise<TodaAssociationResponse> {
+    const todaAssociation = await this.todaAssociationRepo.findOne({
       where: { id },
-      relations: { franchises: withFranchise },
+      relations: {
+        franchises: {
+          user: true,
+          driverProfile: true,
+          todaAssociation: true,
+        },
+      },
     });
+
+    const franchises = todaAssociation.franchises.filter(
+      (franchise) =>
+        franchise.approvalStatus === FranchiseApprovalStatus.Approved,
+    );
+
+    if (withFranchise) {
+      return {
+        ...todaAssociation,
+        franchiseCount: franchises.length,
+        franchises,
+      };
+    }
+
+    return { ...todaAssociation, franchiseCount: franchises.length };
   }
 
   async create(

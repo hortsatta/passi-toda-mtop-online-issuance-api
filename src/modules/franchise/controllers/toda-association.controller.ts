@@ -17,7 +17,10 @@ import { UseAuthGuard } from '#/modules/user/guards/auth.guard';
 import { User } from '#/modules/user/entities/user.entity';
 import { TodaAssociationService } from '../services/toda-association.service';
 import { TodaAssociation } from '../entities/toda-association.entity';
-import { TodaAssociationResponseDto } from '../dtos/toda-association-response.dto';
+import {
+  TodaAssociationResponse,
+  TodaAssociationResponseDto,
+} from '../dtos/toda-association-response.dto';
 import { TodaAssociationCreateDto } from '../dtos/toda-association-create.dto';
 import { TodaAssociationUpdateDto } from '../dtos/toda-association-update.dto';
 
@@ -36,7 +39,7 @@ export class TodaAssociationController {
     @Query('q') q?: string,
     @Query('sort') sort?: string,
     @Query('withFranchise') withFranchise?: boolean,
-  ): Promise<TodaAssociation[]> {
+  ): Promise<TodaAssociationResponse[]> {
     const transformedIds = ids?.split(',').map((id) => +id);
     const includeFranchise =
       user?.role === UserRole.Member ? false : withFranchise;
@@ -53,8 +56,11 @@ export class TodaAssociationController {
   @UseAuthGuard()
   @UseFilterFieldsInterceptor()
   @UseSerializeInterceptor(TodaAssociationResponseDto)
-  getOneById(@Param('id') id: string) {
-    return this.todaAssociationService.getOneById(+id);
+  getOneById(
+    @Param('id') id: string,
+    @Query('withFranchise') withFranchise?: boolean,
+  ): Promise<TodaAssociationResponse> {
+    return this.todaAssociationService.getOneById(+id, withFranchise);
   }
 
   @Post()
