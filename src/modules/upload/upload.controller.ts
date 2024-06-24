@@ -12,7 +12,7 @@ const FRANCHISE_URL = 'franchises';
 
 const fileValidationOptions = {
   maxSize: 5242880,
-  fileTypes: ['jpg', 'jpeg', 'png', 'webp', 'avif'],
+  fileTypes: ['jpg', 'jpeg', 'png', 'webp', 'avif', 'pdf'],
 };
 
 @Controller('upload')

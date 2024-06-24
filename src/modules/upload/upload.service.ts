@@ -9,6 +9,7 @@ import sharp, { AvailableFormatInfo, FitEnum, FormatEnum } from 'sharp';
 
 import { SupabaseService } from '../core/supabase.service';
 
+const PDF_FILE_EXT = 'pdf';
 const COMPRESSION_OPTIONS = {
   width: 1024,
   height: null,
@@ -47,17 +48,28 @@ export class UploadService {
 
     try {
       const transformedFiles = await Promise.all(
-        files.map(async ({ buffer, ...moreFile }) => ({
-          ...moreFile,
-          buffer: await this.resize(
-            buffer,
-            COMPRESSION_OPTIONS.width,
-            COMPRESSION_OPTIONS.height,
-            COMPRESSION_OPTIONS.fit,
-            COMPRESSION_OPTIONS.format,
-            COMPRESSION_OPTIONS.formatOptions,
-          ),
-        })),
+        files.map(async ({ buffer, ...moreFile }) => {
+          const ext = moreFile.originalname.split('.').pop();
+
+          if (ext === PDF_FILE_EXT) {
+            return {
+              ...moreFile,
+              buffer,
+            };
+          }
+
+          return {
+            ...moreFile,
+            buffer: await this.resize(
+              buffer,
+              COMPRESSION_OPTIONS.width,
+              COMPRESSION_OPTIONS.height,
+              COMPRESSION_OPTIONS.fit,
+              COMPRESSION_OPTIONS.format,
+              COMPRESSION_OPTIONS.formatOptions,
+            ),
+          };
+        }),
       );
 
       const results = await Promise.all(
@@ -65,7 +77,13 @@ export class UploadService {
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const [mv, key, name] = originalname.split('-');
           const filename = path.parse(name).name;
-          const targetFilename = `${filename}.${COMPRESSION_OPTIONS.format}`;
+          const ext = originalname.split('.').pop();
+
+          const targetFilename =
+            ext === PDF_FILE_EXT
+              ? `${filename}.${PDF_FILE_EXT}`
+              : `${filename}.${COMPRESSION_OPTIONS.format}`;
+
           const targetPath = `${basePath}/${targetFilename}`;
 
           const { data } = await this.supabaseService
