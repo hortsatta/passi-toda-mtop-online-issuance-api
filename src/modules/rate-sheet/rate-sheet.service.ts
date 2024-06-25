@@ -112,6 +112,14 @@ export class RateSheetService {
     });
   }
 
+  getRateHistory(feeType: FeeType): Promise<RateSheet[]> {
+    return this.rateSheetRepo.find({
+      where: { feeType },
+      order: { createdAt: 'DESC' },
+      relations: { rateSheetFees: true },
+    });
+  }
+
   async create(rateSheetDto: RateSheetCreateDto): Promise<RateSheet> {
     const rateSheet = this.rateSheetRepo.create(rateSheetDto);
     return this.rateSheetRepo.save(rateSheet);
