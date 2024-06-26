@@ -47,7 +47,7 @@ async function bootstrap() {
       whitelist: true,
       forbidNonWhitelisted: true,
       forbidUnknownValues: true,
-      disableErrorMessages: configService.get('NODE_ENV') === 'production',
+      // disableErrorMessages: configService.get('NODE_ENV') === 'production',
       // Automatically transform payloads to be objects typed according to their DTO classes
       transform: true,
     }),
