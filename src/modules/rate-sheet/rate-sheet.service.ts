@@ -10,6 +10,7 @@ import {
   FindOptionsWhere,
   ILike,
   In,
+  LessThanOrEqual,
   Repository,
 } from 'typeorm';
 
@@ -91,7 +92,7 @@ export class RateSheetService {
   }
 
   async getLatestRates(feeTypes: FeeType[]): Promise<RateSheet[]> {
-    const results = await Promise.all(
+    const rateSheets = await Promise.all(
       feeTypes.map((feeType) =>
         this.rateSheetRepo.findOne({
           where: { feeType },
@@ -101,7 +102,47 @@ export class RateSheetService {
       ),
     );
 
-    return results.filter((rateSheet) => !!rateSheet);
+    return rateSheets.filter((rateSheet) => !!rateSheet);
+  }
+
+  async getFranchiseRatesByFranchiseId(
+    franchiseId: number,
+  ): Promise<RateSheet[]> {
+    const franchise = await this.franchiseService.getOneById(franchiseId);
+
+    if (!franchise) throw new NotFoundException('Franchise not found');
+
+    const generateRegistrationWhere = () => {
+      let baseWhere: FindOptionsWhere<RateSheet> = {
+        feeType: FeeType.FranchiseRegistration,
+      };
+
+      if (
+        franchise.approvalStatus === FranchiseApprovalStatus.Paid ||
+        franchise.approvalStatus === FranchiseApprovalStatus.Approved
+      ) {
+        baseWhere = {
+          updatedAt: LessThanOrEqual(franchise.approvalDate),
+          ...baseWhere,
+        };
+      }
+
+      return baseWhere;
+    };
+
+    const registrationRateSheet = await this.rateSheetRepo.findOne({
+      where: generateRegistrationWhere(),
+      order: { createdAt: 'DESC' },
+      relations: { rateSheetFees: true },
+    });
+    // TODO renewal
+    const renewalRateSheet = await this.rateSheetRepo.findOne({
+      where: { feeType: FeeType.FranchiseRenewal },
+      order: { createdAt: 'DESC' },
+      relations: { rateSheetFees: true },
+    });
+
+    return [registrationRateSheet, renewalRateSheet];
   }
 
   getLatestRate(feeType: FeeType): Promise<RateSheet> {

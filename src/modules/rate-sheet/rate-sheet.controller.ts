@@ -20,6 +20,8 @@ import { FeeType } from './enums/rate-sheet.enum';
 import { RateSheetCreateDto } from './dtos/rate-sheet-create.dto';
 import { RateSheetUpdateDto } from './dtos/rate-sheet-update.dto';
 
+const FRANCHISE_URL = '/franchises';
+
 @Controller('rate-sheets')
 export class RateSheetController {
   constructor(private readonly rateSheetService: RateSheetService) {}
@@ -43,6 +45,16 @@ export class RateSheetController {
   @UseSerializeInterceptor(RateSheetResponseDto)
   getOneById(@Param('id') id: string): Promise<RateSheet> {
     return this.rateSheetService.getOneById(+id);
+  }
+
+  @Get(`${FRANCHISE_URL}/list`)
+  @UseAuthGuard()
+  @UseFilterFieldsInterceptor()
+  @UseSerializeInterceptor(RateSheetResponseDto)
+  getFranchiseRateSheetsByFranchiseId(
+    @Query('franchiseId') franchiseId: string,
+  ) {
+    return this.rateSheetService.getFranchiseRatesByFranchiseId(+franchiseId);
   }
 
   @Get('/list/latest')
