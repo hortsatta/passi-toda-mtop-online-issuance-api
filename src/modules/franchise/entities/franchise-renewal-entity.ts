@@ -1,20 +1,13 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 import { Base as BaseEntity } from '#/common/entities/base-entity';
-import { User } from '#/modules/user/entities/user.entity';
 import { DriverProfile } from '#/modules/user/entities/driver-profile.entity';
 import { FranchiseApprovalStatus } from '../enums/franchise.enum';
 import { TodaAssociation } from './toda-association.entity';
-import { FranchiseRenewal } from './franchise-renewal-entity';
+import { Franchise } from './franchise.entity';
 
 @Entity()
-export class Franchise extends BaseEntity {
-  @Column({ type: 'varchar', length: 15 })
-  mvFileNo: string;
-
-  @Column({ type: 'varchar', length: 7 })
-  plateNo: string;
-
+export class FranchiseRenewal extends BaseEntity {
   @Column({ type: 'text' })
   vehicleORImgUrl: string;
 
@@ -62,13 +55,7 @@ export class Franchise extends BaseEntity {
   @JoinColumn()
   driverProfile: DriverProfile;
 
-  @OneToMany(
-    () => FranchiseRenewal,
-    (franchiseRenewal) => franchiseRenewal.franchise,
-  )
-  franchiseRenewals: FranchiseRenewal[];
-
-  @ManyToOne(() => User, (user) => user.franchises)
+  @ManyToOne(() => Franchise, (franchise) => franchise.franchiseRenewals)
   @JoinColumn()
-  user: User;
+  franchise: Franchise;
 }

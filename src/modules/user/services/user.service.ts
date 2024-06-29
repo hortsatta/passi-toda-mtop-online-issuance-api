@@ -56,7 +56,7 @@ export class UserService {
 
     return this.userRepo.save({
       ...user,
-      userProfile,
+      userProfile: { ...user.userProfile, ...userProfile },
     });
   }
 

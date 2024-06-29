@@ -7,6 +7,7 @@ import { User } from './user/entities/user.entity';
 import { UserProfile } from './user/entities/user-profile.entity';
 import { DriverProfile } from './user/entities/driver-profile.entity';
 import { Franchise } from './franchise/entities/franchise.entity';
+import { FranchiseRenewal } from './franchise/entities/franchise-renewal-entity';
 import { TodaAssociation } from './franchise/entities/toda-association.entity';
 import { RateSheet } from './rate-sheet/entities/rate-sheet.entity';
 import { RateSheetFee } from './rate-sheet/entities/rate-sheet-fee.entity';
@@ -38,6 +39,7 @@ import { RateSheetFee } from './rate-sheet/entities/rate-sheet-fee.entity';
             UserProfile,
             DriverProfile,
             Franchise,
+            FranchiseRenewal,
             TodaAssociation,
             RateSheet,
             RateSheetFee,

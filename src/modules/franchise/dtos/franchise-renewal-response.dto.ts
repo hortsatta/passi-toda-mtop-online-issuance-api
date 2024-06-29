@@ -1,20 +1,12 @@
 import { Expose, Type } from 'class-transformer';
 
 import { BaseResponseDto } from '#/common/dtos/base-response.dto';
-import { UserSafeResponseDto } from '#/modules/user/dtos/user-safe-response.dto';
 import { DriverProfileResponseDto } from '#/modules/user/dtos/driver-profile-response.dto';
 import { FranchiseApprovalStatus } from '../enums/franchise.enum';
-import { Franchise } from '../entities/franchise.entity';
 import { TodaAssociationResponseDto } from './toda-association-response.dto';
-import { FranchiseRenewalResponseDto } from './franchise-renewal-response.dto';
+import { FranchiseResponseDto } from './franchise-response.dto';
 
-export class FranchiseResponseDto extends BaseResponseDto {
-  @Expose()
-  mvFileNo: string;
-
-  @Expose()
-  plateNo: string;
-
+export class FranchiseRenewalResponseDto extends BaseResponseDto {
   @Expose()
   vehicleORImgUrl: string;
 
@@ -43,12 +35,6 @@ export class FranchiseResponseDto extends BaseResponseDto {
   expiryDate: Date;
 
   @Expose()
-  isExpired: boolean;
-
-  @Expose()
-  canRenew: boolean;
-
-  @Expose()
   isDriverOwner: boolean;
 
   @Expose()
@@ -60,15 +46,6 @@ export class FranchiseResponseDto extends BaseResponseDto {
   driverProfile: DriverProfileResponseDto;
 
   @Expose()
-  @Type(() => FranchiseRenewalResponseDto)
-  franchiseRenewals: FranchiseRenewalResponseDto[];
-
-  @Expose()
-  @Type(() => UserSafeResponseDto)
-  user: UserSafeResponseDto;
+  @Type(() => FranchiseResponseDto)
+  franchise: FranchiseResponseDto;
 }
-
-export type FranchiseResponse = Franchise & {
-  isExpired: boolean;
-  canRenew: boolean;
-};

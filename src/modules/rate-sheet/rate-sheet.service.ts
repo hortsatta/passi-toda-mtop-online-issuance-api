@@ -130,14 +130,35 @@ export class RateSheetService {
       return baseWhere;
     };
 
+    const generateRenewalWhere = () => {
+      let baseWhere: FindOptionsWhere<RateSheet> = {
+        feeType: FeeType.FranchiseRenewal,
+      };
+
+      if (
+        franchise.franchiseRenewals.length &&
+        (franchise.franchiseRenewals[0].approvalStatus ===
+          FranchiseApprovalStatus.Paid ||
+          franchise.franchiseRenewals[0].approvalStatus ===
+            FranchiseApprovalStatus.Approved)
+      ) {
+        baseWhere = {
+          updatedAt: LessThanOrEqual(franchise.approvalDate),
+          ...baseWhere,
+        };
+      }
+
+      return baseWhere;
+    };
+
     const registrationRateSheet = await this.rateSheetRepo.findOne({
       where: generateRegistrationWhere(),
       order: { createdAt: 'DESC' },
       relations: { rateSheetFees: true },
     });
-    // TODO renewal
+
     const renewalRateSheet = await this.rateSheetRepo.findOne({
-      where: { feeType: FeeType.FranchiseRenewal },
+      where: generateRenewalWhere(),
       order: { createdAt: 'DESC' },
       relations: { rateSheetFees: true },
     });

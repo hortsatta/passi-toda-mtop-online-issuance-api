@@ -9,21 +9,21 @@ import {
 import dayjs from '#/common/config/dayjs.config';
 import { EXPIRY_AFTER_APPROVAL_DAYS } from '../config/franchise.config';
 import { FranchiseApprovalStatus } from '../enums/franchise.enum';
-import { Franchise } from '../entities/franchise.entity';
+import { FranchiseRenewal } from '../entities/franchise-renewal-entity';
 
 @EventSubscriber()
-export class FranchiseSubscriber
-  implements EntitySubscriberInterface<Franchise>
+export class FranchiseRenewalSubscriber
+  implements EntitySubscriberInterface<FranchiseRenewal>
 {
   constructor(dataSource: DataSource) {
     dataSource.subscribers.push(this);
   }
 
   listenTo() {
-    return Franchise;
+    return FranchiseRenewal;
   }
 
-  beforeInsert(event: InsertEvent<Franchise>) {
+  beforeInsert(event: InsertEvent<FranchiseRenewal>) {
     if (
       !event.entity.approvalStatus ||
       event.entity.approvalStatus === FranchiseApprovalStatus.PendingValidation
@@ -41,9 +41,9 @@ export class FranchiseSubscriber
     }
   }
 
-  async beforeUpdate(event: UpdateEvent<Franchise>) {
+  async beforeUpdate(event: UpdateEvent<FranchiseRenewal>) {
     const prevUser = await event.connection
-      .getRepository(Franchise)
+      .getRepository(FranchiseRenewal)
       .findOne({ where: { id: event.entity.id } });
 
     // Check previous data and automatically set approval date

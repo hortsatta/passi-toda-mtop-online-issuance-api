@@ -13,17 +13,21 @@ import {
   ILike,
   In,
   IsNull,
-  MoreThanOrEqual,
   Not,
   Repository,
 } from 'typeorm';
 
 import { DriverProfileService } from '#/modules/user/services/driver-profile.service';
+import {
+  getExpiryStatus,
+  transformFranchises,
+} from '../helpers/franchise.helper';
 import { FranchiseApprovalStatus } from '../enums/franchise.enum';
 import { Franchise } from '../entities/franchise.entity';
 import { TodaAssociation } from '../entities/toda-association.entity';
 import { FranchiseCreateDto } from '../dtos/franchise-create.dto';
 import { FranchiseUpdateDto } from '../dtos/franchise-update.dto';
+import { FranchiseResponse } from '../dtos/franchise-response.dto';
 
 @Injectable()
 export class FranchiseService {
@@ -124,27 +128,19 @@ export class FranchiseService {
 
   // TODO get paginated
 
-  getAllFranchises(
+  async getAllFranchises(
     sort?: string,
     franchiseIds?: number[],
     q?: string,
     status?: string,
     take?: number,
     startDate?: Date,
-  ): Promise<Franchise[]> {
+  ): Promise<FranchiseResponse[]> {
     const generateWhere = () => {
       let baseWhere: FindOptionsWhere<Franchise> = {};
 
       if (franchiseIds?.length) {
         baseWhere = { ...baseWhere, id: In(franchiseIds) };
-      }
-
-      if (status?.trim()) {
-        baseWhere = { ...baseWhere, approvalStatus: In(status.split(',')) };
-      }
-
-      if (startDate) {
-        baseWhere = { ...baseWhere, createdAt: MoreThanOrEqual(startDate) };
       }
 
       if (q?.trim()) {
@@ -178,7 +174,7 @@ export class FranchiseService {
         }
       : {};
 
-    return this.franchiseRepo.find({
+    const franchises = await this.franchiseRepo.find({
       where: generateWhere(),
       order: generateOrder(),
       ...takeOptions,
@@ -186,18 +182,47 @@ export class FranchiseService {
         user: true,
         driverProfile: true,
         todaAssociation: true,
+        franchiseRenewals: { driverProfile: true, todaAssociation: true },
       },
     });
+
+    let transformedFranchises = transformFranchises(
+      franchises,
+    ) as FranchiseResponse[];
+
+    if (status?.trim()) {
+      transformedFranchises = transformedFranchises.filter((franchise: any) => {
+        const target = franchise.franchiseRenewals.length
+          ? franchise.franchiseRenewals[0]
+          : franchise;
+
+        const statuses = status.split(',');
+
+        return statuses.some((status) => status === target.approvalStatus);
+      });
+    }
+
+    if (startDate) {
+      transformedFranchises = transformedFranchises.filter((franchise: any) => {
+        const target = franchise.franchiseRenewals.length
+          ? franchise.franchiseRenewals[0]
+          : franchise;
+
+        return target.createdAt.valueOf() >= startDate.valueOf();
+      });
+    }
+
+    return transformedFranchises;
   }
 
-  getAllFranchisesByMemberId(
+  async getAllFranchisesByMemberId(
     memberId: number,
     sort?: string,
     franchiseIds?: number[],
     q?: string,
     status?: string,
     take?: number,
-  ): Promise<Franchise[]> {
+  ): Promise<FranchiseResponse[]> {
     const generateWhere = () => {
       let baseWhere: FindOptionsWhere<Franchise> = {
         user: { id: memberId },
@@ -207,10 +232,6 @@ export class FranchiseService {
         baseWhere = { ...baseWhere, id: In(franchiseIds) };
       }
 
-      if (status?.trim()) {
-        baseWhere = { ...baseWhere, approvalStatus: In(status.split(',')) };
-      }
-
       if (q?.trim()) {
         return [
           { plateNo: ILike(`%${q}%`), ...baseWhere },
@@ -242,19 +263,41 @@ export class FranchiseService {
         }
       : {};
 
-    return this.franchiseRepo.find({
+    const franchises = await this.franchiseRepo.find({
       where: generateWhere(),
       order: generateOrder(),
       ...takeOptions,
-      relations: { todaAssociation: true, driverProfile: true },
+      relations: {
+        todaAssociation: true,
+        driverProfile: true,
+        franchiseRenewals: { todaAssociation: true, driverProfile: true },
+      },
     });
+
+    let transformedFranchises = transformFranchises(
+      franchises,
+    ) as FranchiseResponse[];
+
+    if (status?.trim()) {
+      transformedFranchises = transformedFranchises.filter((franchise: any) => {
+        const target = franchise.franchiseRenewals.length
+          ? franchise.franchiseRenewals[0]
+          : franchise;
+
+        const statuses = status.split(',');
+
+        return statuses.some((status) => status === target.approvalStatus);
+      });
+    }
+
+    return transformedFranchises;
   }
 
-  getAllFranchisesByDateRange(
+  async getAllFranchisesByDateRange(
     startDate: Date,
     endDate: Date,
     statuses?: FranchiseApprovalStatus[],
-  ): Promise<Franchise[]> {
+  ): Promise<FranchiseResponse[]> {
     const generateWhere = () => {
       if (
         statuses?.length &&
@@ -277,48 +320,104 @@ export class FranchiseService {
       ];
     };
 
-    return this.franchiseRepo.find({
+    const franchises = await this.franchiseRepo.find({
       where: generateWhere(),
       order: { createdAt: 'ASC' },
       relations: {
         user: true,
         driverProfile: true,
         todaAssociation: true,
+        franchiseRenewals: { todaAssociation: true, driverProfile: true },
       },
     });
+
+    const transformedFranchises = transformFranchises(
+      franchises,
+    ) as FranchiseResponse[];
+
+    if (
+      statuses?.length &&
+      statuses.every(
+        (status) => status !== FranchiseApprovalStatus.PendingValidation,
+      )
+    ) {
+      return transformedFranchises.filter((franchise) => {
+        const target = franchise.franchiseRenewals.length
+          ? franchise.franchiseRenewals[0]
+          : franchise;
+
+        return (
+          target.approvalDate.valueOf() >= startDate.valueOf() &&
+          target.approvalDate.valueOf() <= endDate.valueOf()
+        );
+      });
+    } else {
+      return transformedFranchises.filter((franchise) => {
+        const target = franchise.franchiseRenewals.length
+          ? franchise.franchiseRenewals[0]
+          : franchise;
+
+        return (
+          (target.createdAt.valueOf() >= startDate.valueOf() &&
+            target.createdAt.valueOf() <= endDate.valueOf()) ||
+          (target.approvalDate.valueOf() >= startDate.valueOf() &&
+            target.approvalDate.valueOf() <= endDate.valueOf())
+        );
+      });
+    }
   }
 
-  getOneById(id: number, memberId?: number): Promise<Franchise> {
+  async getOneById(id: number, memberId?: number): Promise<FranchiseResponse> {
     const where = memberId ? { id, user: { id: memberId } } : { id };
-    return this.franchiseRepo.findOne({
+
+    const franchise = await this.franchiseRepo.findOne({
       where,
       relations: {
         user: true,
         driverProfile: true,
         todaAssociation: true,
+        franchiseRenewals: { todaAssociation: true, driverProfile: true },
       },
     });
+
+    if (!franchise) throw new NotFoundException('Franchise not found');
+
+    return transformFranchises(franchise) as FranchiseResponse;
   }
 
-  getOneByIdAsTreasurer(id: number): Promise<Franchise> {
-    return this.franchiseRepo.findOne({
-      where: {
-        id,
-        approvalStatus: In([
-          FranchiseApprovalStatus.Validated,
-          FranchiseApprovalStatus.Paid,
-        ]),
-      },
+  async getOneByIdAsTreasurer(id: number): Promise<FranchiseResponse> {
+    const franchise = await this.franchiseRepo.findOne({
+      where: { id },
       relations: {
         user: true,
         driverProfile: true,
         todaAssociation: true,
+        franchiseRenewals: { todaAssociation: true, driverProfile: true },
       },
     });
+
+    if (!franchise) throw new NotFoundException('Franchise not found');
+
+    const transformedFranchise = transformFranchises(
+      franchise,
+    ) as FranchiseResponse;
+
+    const target = !transformedFranchise.franchiseRenewals.length
+      ? transformedFranchise
+      : transformedFranchise.franchiseRenewals[0];
+
+    if (
+      target.approvalStatus !== FranchiseApprovalStatus.Validated &&
+      target.approvalStatus !== FranchiseApprovalStatus.Paid
+    ) {
+      return null;
+    }
+
+    return transformedFranchise;
   }
 
-  checkOneByMvPlateNo(mvPlateNo: string): Promise<Franchise> {
-    const baseWhere: FindOptionsWhere<Franchise> = {
+  async checkOneByMvPlateNo(mvPlateNo: string): Promise<FranchiseResponse> {
+    const baseWhere: FindOptionsWhere<FranchiseResponse> = {
       approvalStatus: Not(
         In([
           FranchiseApprovalStatus.Canceled,
@@ -332,14 +431,21 @@ export class FranchiseService {
       { plateNo: Equal(mvPlateNo), ...baseWhere },
     ];
 
-    return this.franchiseRepo.findOne({
+    const franchise = await this.franchiseRepo.findOne({
       where,
       relations: {
         user: true,
         driverProfile: true,
         todaAssociation: true,
+        franchiseRenewals: { todaAssociation: true, driverProfile: true },
       },
     });
+
+    if (!franchise) throw new NotFoundException('Franchise not found');
+
+    const transformedFranchise = transformFranchises(franchise);
+
+    return transformedFranchise as FranchiseResponse;
   }
 
   async validateUpsert(
@@ -362,7 +468,7 @@ export class FranchiseService {
   async create(
     franchiseDto: FranchiseCreateDto,
     memberId: number,
-  ): Promise<Franchise> {
+  ): Promise<FranchiseResponse> {
     const {
       mvFileNo: targetMvFileNo,
       plateNo: targetPlateNo,
@@ -401,14 +507,16 @@ export class FranchiseService {
       user: { id: memberId },
     });
 
-    return this.franchiseRepo.save(franchise);
+    const newFranchise = await this.franchiseRepo.save(franchise);
+
+    return { ...newFranchise, canRenew: false, isExpired: false };
   }
 
   async update(
     franchiseDto: FranchiseUpdateDto,
     id: number,
     memberId: number,
-  ): Promise<Franchise> {
+  ): Promise<FranchiseResponse> {
     const {
       mvFileNo: targetMvFileNo,
       plateNo: targetPlateNo,
@@ -425,22 +533,33 @@ export class FranchiseService {
     const mvFileNo = targetMvFileNo?.toLowerCase();
     const plateNo = targetPlateNo?.toLowerCase();
 
-    return this.franchiseRepo.save({
+    const updatedFranchise = await this.franchiseRepo.save({
       ...franchise,
       ...moreFranchiseDto,
       ...(mvFileNo && { mvFileNo }),
       ...(plateNo && { plateNo }),
       todaAssociation: { id: todaAssociationId },
     });
+
+    const expiryStatus = getExpiryStatus(updatedFranchise.expiryDate);
+
+    return { ...updatedFranchise, ...expiryStatus };
   }
 
   async setApprovalStatus(
     id: number,
     approvalStatus?: FranchiseApprovalStatus,
-  ): Promise<Franchise> {
-    const franchise = await this.franchiseRepo.findOne({ where: { id } });
+  ): Promise<FranchiseResponse> {
+    const franchise = await this.franchiseRepo.findOne({
+      where: { id },
+      relations: { franchiseRenewals: true },
+    });
     // Return error if user row does not exist
-    if (!franchise) throw new NotFoundException('Franchise not found');
+    if (!franchise) {
+      throw new NotFoundException('Franchise not found');
+    } else if (franchise.franchiseRenewals.length) {
+      throw new BadRequestException('Cannot set franchise status');
+    }
 
     let updatedApprovalStatus = approvalStatus;
 
@@ -463,7 +582,7 @@ export class FranchiseService {
       approvalStatus: updatedApprovalStatus,
     });
 
-    return this.franchiseRepo.findOne({
+    const updatedFranchise = await this.franchiseRepo.findOne({
       where: { id },
       relations: {
         user: true,
@@ -471,6 +590,10 @@ export class FranchiseService {
         todaAssociation: true,
       },
     });
+
+    const expiryStatus = getExpiryStatus(updatedFranchise.approvalDate);
+
+    return { ...updatedFranchise, ...expiryStatus };
   }
 
   async delete(id: number, memberId: number): Promise<boolean> {

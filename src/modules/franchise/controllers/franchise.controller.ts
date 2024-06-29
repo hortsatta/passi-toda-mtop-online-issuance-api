@@ -19,7 +19,10 @@ import { FranchiseApprovalStatus } from '../enums/franchise.enum';
 import { User } from '../../user/entities/user.entity';
 import { Franchise } from '../entities/franchise.entity';
 import { FranchiseService } from '../services/franchise.service';
-import { FranchiseResponseDto } from '../dtos/franchise-response.dto';
+import {
+  FranchiseResponse,
+  FranchiseResponseDto,
+} from '../dtos/franchise-response.dto';
 import { FranchiseCreateDto } from '../dtos/franchise-create.dto';
 import { FranchiseUpdateDto } from '../dtos/franchise-update.dto';
 import {
@@ -46,7 +49,7 @@ export class FranchiseController {
     @Query('status') status?: string,
     @Query('sort') sort?: string,
     @Query('take') take?: string,
-  ): Promise<Franchise[]> {
+  ): Promise<FranchiseResponse[]> {
     const id = user.role === UserRole.Member ? user.id : +(memberId || 0);
     const transformedIds = ids?.split(',').map((id) => +id);
     return this.franchiseService.getAllFranchisesByMemberId(
@@ -70,7 +73,7 @@ export class FranchiseController {
     @Query('status') status?: string,
     @Query('sort') sort?: string,
     @Query('take') take?: string,
-  ): Promise<Franchise[]> {
+  ): Promise<FranchiseResponse[]> {
     const transformedIds = ids?.split(',').map((id) => +id);
 
     const franchises = await this.franchiseService.getAllFranchises(
@@ -164,7 +167,7 @@ export class FranchiseController {
   getOneById(
     @Param('id') id: string,
     @CurrentUser() user: User,
-  ): Promise<Franchise> {
+  ): Promise<FranchiseResponse> {
     const memberId = user.role === UserRole.Member ? user.id : undefined;
     return this.franchiseService.getOneById(+id, memberId);
   }
@@ -182,7 +185,7 @@ export class FranchiseController {
   @UseSerializeInterceptor(FranchiseResponseDto)
   checkOneByMvPlateNo(
     @Param('mvPlateNo') mvPlateNo: string,
-  ): Promise<Franchise | null> {
+  ): Promise<FranchiseResponse | null> {
     return this.franchiseService.checkOneByMvPlateNo(mvPlateNo);
   }
 
@@ -206,7 +209,7 @@ export class FranchiseController {
   create(
     @Body() body: FranchiseCreateDto,
     @CurrentUser() user: User,
-  ): Promise<Franchise> {
+  ): Promise<FranchiseResponse> {
     return this.franchiseService.create(body, user.id);
   }
 
@@ -217,7 +220,7 @@ export class FranchiseController {
     @Param('id') id: string,
     @Body() body: FranchiseUpdateDto,
     @CurrentUser() user: User,
-  ): Promise<Franchise> {
+  ): Promise<FranchiseResponse> {
     return this.franchiseService.update(body, +id, user.id);
   }
 
@@ -227,7 +230,7 @@ export class FranchiseController {
     @Param('id') id: string,
     @Body() body: { approvalStatus?: FranchiseApprovalStatus },
     @CurrentUser() user: User,
-  ): Promise<Franchise> {
+  ): Promise<FranchiseResponse> {
     if (
       (user.role === UserRole.Member &&
         body.approvalStatus !== FranchiseApprovalStatus.Canceled) ||
