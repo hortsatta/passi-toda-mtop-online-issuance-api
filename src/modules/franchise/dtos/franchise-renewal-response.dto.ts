@@ -5,6 +5,7 @@ import { DriverProfileResponseDto } from '#/modules/user/dtos/driver-profile-res
 import { FranchiseApprovalStatus } from '../enums/franchise.enum';
 import { TodaAssociationResponseDto } from './toda-association-response.dto';
 import { FranchiseResponseDto } from './franchise-response.dto';
+import { FranchiseStatusRemarkResponseDto } from './franchise-status-remark-response.dto';
 
 export class FranchiseRenewalResponseDto extends BaseResponseDto {
   @Expose()
@@ -44,6 +45,10 @@ export class FranchiseRenewalResponseDto extends BaseResponseDto {
   @Expose()
   @Type(() => DriverProfileResponseDto)
   driverProfile: DriverProfileResponseDto;
+
+  @Expose()
+  @Type(() => FranchiseStatusRemarkResponseDto)
+  franchiseStatusRemarks: FranchiseStatusRemarkResponseDto[];
 
   @Expose()
   @Type(() => FranchiseResponseDto)

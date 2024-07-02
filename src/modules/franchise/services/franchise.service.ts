@@ -18,15 +18,13 @@ import {
 } from 'typeorm';
 
 import { DriverProfileService } from '#/modules/user/services/driver-profile.service';
-import {
-  getExpiryStatus,
-  transformFranchises,
-} from '../helpers/franchise.helper';
+import { transformFranchises } from '../helpers/franchise.helper';
 import { FranchiseApprovalStatus } from '../enums/franchise.enum';
 import { Franchise } from '../entities/franchise.entity';
 import { TodaAssociation } from '../entities/toda-association.entity';
 import { FranchiseCreateDto } from '../dtos/franchise-create.dto';
 import { FranchiseUpdateDto } from '../dtos/franchise-update.dto';
+import { FranchiseApprovalStatusUpdateDto } from '../dtos/franchise-approval-status-update.dto';
 import { FranchiseResponse } from '../dtos/franchise-response.dto';
 
 @Injectable()
@@ -55,12 +53,19 @@ export class FranchiseService {
 
     const existingFranchise = await this.franchiseRepo.findOne({
       where: [{ mvFileNo }, { plateNo }],
-      relations: { user: true },
+      relations: {
+        user: true,
+        franchiseRenewals: { driverProfile: true, todaAssociation: true },
+      },
     });
 
     const todaAssociation = await this.todaAssociationRepo.findOne({
       where: { id: todaAssociationId },
     });
+
+    if (!todaAssociation) {
+      throw new BadRequestException('TODA Association not found');
+    }
 
     if (!isDriverOwner && driverProfileId != null) {
       const driverProfile = await this.driverProfileService.getOneById(
@@ -75,18 +80,26 @@ export class FranchiseService {
       throw new BadRequestException('Driver is required');
     }
 
-    if (existingFranchise?.user.id === memberId) {
+    if (!existingFranchise) return;
+
+    const franchiseResponse = transformFranchises(
+      existingFranchise,
+    ) as FranchiseResponse;
+
+    if (franchiseResponse.user.id === memberId) {
       throw new BadRequestException('Vehicle already exist');
     }
 
     if (
-      existingFranchise?.approvalStatus === FranchiseApprovalStatus.Approved ||
-      existingFranchise?.approvalStatus === FranchiseApprovalStatus.Paid ||
-      existingFranchise?.approvalStatus === FranchiseApprovalStatus.Validated
+      (franchiseResponse.approvalStatus === FranchiseApprovalStatus.Approved &&
+        !franchiseResponse.isExpired) ||
+      (franchiseResponse.approvalStatus === FranchiseApprovalStatus.Approved &&
+        franchiseResponse.isExpired &&
+        franchiseResponse.canRenew) ||
+      franchiseResponse.approvalStatus === FranchiseApprovalStatus.Paid ||
+      franchiseResponse.approvalStatus === FranchiseApprovalStatus.Validated
     ) {
       throw new BadRequestException('Vehicle already registered');
-    } else if (!todaAssociation) {
-      throw new BadRequestException('TODA Association not found');
     }
   }
 
@@ -182,7 +195,12 @@ export class FranchiseService {
         user: true,
         driverProfile: true,
         todaAssociation: true,
-        franchiseRenewals: { driverProfile: true, todaAssociation: true },
+        franchiseStatusRemarks: true,
+        franchiseRenewals: {
+          driverProfile: true,
+          todaAssociation: true,
+          franchiseStatusRemarks: true,
+        },
       },
     });
 
@@ -270,7 +288,12 @@ export class FranchiseService {
       relations: {
         todaAssociation: true,
         driverProfile: true,
-        franchiseRenewals: { todaAssociation: true, driverProfile: true },
+        franchiseStatusRemarks: true,
+        franchiseRenewals: {
+          todaAssociation: true,
+          driverProfile: true,
+          franchiseStatusRemarks: true,
+        },
       },
     });
 
@@ -327,7 +350,12 @@ export class FranchiseService {
         user: true,
         driverProfile: true,
         todaAssociation: true,
-        franchiseRenewals: { todaAssociation: true, driverProfile: true },
+        franchiseStatusRemarks: true,
+        franchiseRenewals: {
+          todaAssociation: true,
+          driverProfile: true,
+          franchiseStatusRemarks: true,
+        },
       },
     });
 
@@ -376,7 +404,12 @@ export class FranchiseService {
         user: true,
         driverProfile: true,
         todaAssociation: true,
-        franchiseRenewals: { todaAssociation: true, driverProfile: true },
+        franchiseStatusRemarks: true,
+        franchiseRenewals: {
+          todaAssociation: true,
+          driverProfile: true,
+          franchiseStatusRemarks: true,
+        },
       },
     });
 
@@ -392,7 +425,12 @@ export class FranchiseService {
         user: true,
         driverProfile: true,
         todaAssociation: true,
-        franchiseRenewals: { todaAssociation: true, driverProfile: true },
+        franchiseStatusRemarks: true,
+        franchiseRenewals: {
+          todaAssociation: true,
+          driverProfile: true,
+          franchiseStatusRemarks: true,
+        },
       },
     });
 
@@ -437,7 +475,12 @@ export class FranchiseService {
         user: true,
         driverProfile: true,
         todaAssociation: true,
-        franchiseRenewals: { todaAssociation: true, driverProfile: true },
+        franchiseStatusRemarks: true,
+        franchiseRenewals: {
+          todaAssociation: true,
+          driverProfile: true,
+          franchiseStatusRemarks: true,
+        },
       },
     });
 
@@ -541,15 +584,15 @@ export class FranchiseService {
       todaAssociation: { id: todaAssociationId },
     });
 
-    const expiryStatus = getExpiryStatus(updatedFranchise.expiryDate);
-
-    return { ...updatedFranchise, ...expiryStatus };
+    return transformFranchises(updatedFranchise) as FranchiseResponse;
   }
 
   async setApprovalStatus(
     id: number,
-    approvalStatus?: FranchiseApprovalStatus,
+    franchiseApprovalStatusDto: FranchiseApprovalStatusUpdateDto,
   ): Promise<FranchiseResponse> {
+    const { approvalStatus, statusRemarks } = franchiseApprovalStatusDto;
+
     const franchise = await this.franchiseRepo.findOne({
       where: { id },
       relations: { franchiseRenewals: true },
@@ -580,6 +623,7 @@ export class FranchiseService {
     await this.franchiseRepo.save({
       ...franchise,
       approvalStatus: updatedApprovalStatus,
+      franchiseStatusRemarks: statusRemarks?.length ? statusRemarks : undefined,
     });
 
     const updatedFranchise = await this.franchiseRepo.findOne({
@@ -588,12 +632,16 @@ export class FranchiseService {
         user: true,
         driverProfile: true,
         todaAssociation: true,
+        franchiseStatusRemarks: true,
+        franchiseRenewals: {
+          todaAssociation: true,
+          driverProfile: true,
+          franchiseStatusRemarks: true,
+        },
       },
     });
 
-    const expiryStatus = getExpiryStatus(updatedFranchise.approvalDate);
-
-    return { ...updatedFranchise, ...expiryStatus };
+    return transformFranchises(updatedFranchise) as FranchiseResponse;
   }
 
   async delete(id: number, memberId: number): Promise<boolean> {

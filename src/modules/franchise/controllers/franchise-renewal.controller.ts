@@ -17,10 +17,11 @@ import { User } from '#/modules/user/entities/user.entity';
 import { UserRole } from '#/modules/user/enums/user.enum';
 import { UseAuthGuard } from '#/modules/user/guards/auth.guard';
 import { FranchiseApprovalStatus } from '../enums/franchise.enum';
-import { FranchiseRenewal } from '../entities/franchise-renewal-entity';
+import { FranchiseRenewal } from '../entities/franchise-renewal.entity';
 import { FranchiseRenewalCreateDto } from '../dtos/franchise-renewal-create.dto';
 import { FranchiseRenewalResponseDto } from '../dtos/franchise-renewal-response.dto';
 import { FranchiseRenewalUpdateDto } from '../dtos/franchise-renewal-update.dto';
+import { FranchiseApprovalStatusUpdateDto } from '../dtos/franchise-approval-status-update.dto';
 import { FranchiseResponseDto } from '../dtos/franchise-response.dto';
 import { FranchiseRenewalService } from '../services/franchise-renewal.service';
 
@@ -91,7 +92,7 @@ export class FranchiseRenewalController {
   @UseAuthGuard()
   approveFranchiseRenewal(
     @Param('id') id: string,
-    @Body() body: { approvalStatus?: FranchiseApprovalStatus },
+    @Body() body: FranchiseApprovalStatusUpdateDto,
     @CurrentUser() user: User,
   ): Promise<FranchiseRenewal> {
     if (
@@ -105,10 +106,7 @@ export class FranchiseRenewalController {
       throw new UnauthorizedException('Action is forbidden');
     }
 
-    return this.franchiseRenewalService.setApprovalStatus(
-      +id,
-      body.approvalStatus,
-    );
+    return this.franchiseRenewalService.setApprovalStatus(+id, body);
   }
 
   @Delete('/:id')

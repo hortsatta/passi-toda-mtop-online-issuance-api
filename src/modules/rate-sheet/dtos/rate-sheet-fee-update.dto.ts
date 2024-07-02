@@ -4,6 +4,7 @@ import {
   IsInt,
   IsPositive,
   IsOptional,
+  IsBoolean,
 } from 'class-validator';
 
 export class RateSheetFeeUpdateDto {
@@ -16,4 +17,12 @@ export class RateSheetFeeUpdateDto {
   @IsPositive()
   @IsOptional()
   amount: number;
+
+  @IsBoolean()
+  @IsOptional()
+  isPenalty: boolean;
+
+  @IsInt()
+  @IsOptional()
+  activatePenaltyAfterExpiryDays: number;
 }

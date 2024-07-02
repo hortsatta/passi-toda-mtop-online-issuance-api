@@ -29,6 +29,7 @@ import {
   FranchiseDigest,
   FranchiseDigestResponseDto,
 } from '../dtos/franchise-digest-response.dto';
+import { FranchiseApprovalStatusUpdateDto } from '../dtos/franchise-approval-status-update.dto';
 
 const ISSUER_URL = '/issuer';
 const TREASURER_URL = '/treasurer';
@@ -226,9 +227,10 @@ export class FranchiseController {
 
   @Patch('/approve/:id')
   @UseAuthGuard()
+  @UseSerializeInterceptor(FranchiseResponseDto)
   approveFranchise(
     @Param('id') id: string,
-    @Body() body: { approvalStatus?: FranchiseApprovalStatus },
+    @Body() body: FranchiseApprovalStatusUpdateDto,
     @CurrentUser() user: User,
   ): Promise<FranchiseResponse> {
     if (
@@ -242,7 +244,7 @@ export class FranchiseController {
       throw new UnauthorizedException('Action is forbidden');
     }
 
-    return this.franchiseService.setApprovalStatus(+id, body.approvalStatus);
+    return this.franchiseService.setApprovalStatus(+id, body);
   }
 
   @Delete('/:id')

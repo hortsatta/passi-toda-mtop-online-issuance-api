@@ -28,6 +28,7 @@ export class UploadService {
   async uploadFranchiseImages(
     files: Express.Multer.File[],
     memberId: number,
+    baseFilename?: string,
   ): Promise<{
     vehicleORImgUrl?: string;
     vehicleCRImgUrl?: string;
@@ -76,8 +77,12 @@ export class UploadService {
         transformedFiles.map(async ({ buffer, originalname }) => {
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const [mv, key, name] = originalname.split('-');
-          const filename = path.parse(name).name;
+
           const ext = originalname.split('.').pop();
+
+          const filename = baseFilename?.length
+            ? `${baseFilename}-${path.parse(name).name}`
+            : path.parse(name).name;
 
           const targetFilename =
             ext === PDF_FILE_EXT

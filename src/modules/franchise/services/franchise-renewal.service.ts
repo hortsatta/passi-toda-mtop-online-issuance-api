@@ -9,16 +9,19 @@ import { In, IsNull, Not, Repository } from 'typeorm';
 
 import dayjs from '#/common/config/dayjs.config';
 import { DriverProfileService } from '#/modules/user/services/driver-profile.service';
-import { FranchiseApprovalStatus } from '../enums/franchise.enum';
-import { Franchise } from '../entities/franchise.entity';
-import { FranchiseRenewal } from '../entities/franchise-renewal-entity';
-import { TodaAssociation } from '../entities/toda-association.entity';
-import { FranchiseRenewalCreateDto } from '../dtos/franchise-renewal-create.dto';
-import { FranchiseRenewalUpdateDto } from '../dtos/franchise-renewal-update.dto';
 import {
   ENABLE_RENEW_AFTER_EXPIRY_DAYS,
   ENABLE_RENEW_BEFORE_EXPIRY_DAYS,
 } from '../config/franchise.config';
+import { transformFranchises } from '../helpers/franchise.helper';
+import { FranchiseApprovalStatus } from '../enums/franchise.enum';
+import { Franchise } from '../entities/franchise.entity';
+import { FranchiseRenewal } from '../entities/franchise-renewal.entity';
+import { TodaAssociation } from '../entities/toda-association.entity';
+import { FranchiseRenewalCreateDto } from '../dtos/franchise-renewal-create.dto';
+import { FranchiseRenewalUpdateDto } from '../dtos/franchise-renewal-update.dto';
+import { FranchiseApprovalStatusUpdateDto } from '../dtos/franchise-approval-status-update.dto';
+import { FranchiseResponse } from '../dtos/franchise-response.dto';
 
 @Injectable()
 export class FranchiseRenewalService {
@@ -37,44 +40,29 @@ export class FranchiseRenewalService {
     franchiseRenewalDto: FranchiseRenewalCreateDto,
     memberId: number,
   ) {
-    const currentDate = dayjs();
-
-    const { driverProfileId, driverProfile, isDriverOwner, franchiseId } =
-      franchiseRenewalDto;
+    const {
+      todaAssociationId,
+      driverProfileId,
+      driverProfile,
+      isDriverOwner,
+      franchiseId,
+    } = franchiseRenewalDto;
 
     const franchise = await this.franchiseRepo.findOne({
       where: { id: franchiseId },
+      relations: {
+        driverProfile: true,
+        todaAssociation: true,
+        franchiseRenewals: { todaAssociation: true, driverProfile: true },
+      },
     });
 
-    if (!franchise) {
-      throw new BadRequestException('Franchise does not exist');
-    } else if (franchise.approvalStatus !== FranchiseApprovalStatus.Approved) {
-      throw new BadRequestException('Franchise not yet approved');
-    }
-
-    const franchiseRenewal = await this.franchiseRenewalRepo.findOne({
-      where: { franchise: { id: franchiseId } },
-      order: { createdAt: 'DESC' },
+    const todaAssociation = await this.todaAssociationRepo.findOne({
+      where: { id: todaAssociationId },
     });
 
-    if (
-      franchiseRenewal &&
-      franchiseRenewal.approvalStatus !== FranchiseApprovalStatus.Approved
-    ) {
-      throw new BadRequestException('Franchise renewal ongoing');
-    }
-
-    const target = franchiseRenewal || franchise;
-
-    if (
-      !currentDate.isBetween(
-        dayjs(target.expiryDate).subtract(ENABLE_RENEW_BEFORE_EXPIRY_DAYS, 'd'),
-        dayjs(target.expiryDate).add(ENABLE_RENEW_AFTER_EXPIRY_DAYS, 'd'),
-        'day',
-        '[]',
-      )
-    ) {
-      throw new BadRequestException('Cannot renew franchise');
+    if (!todaAssociation) {
+      throw new BadRequestException('TODA Association not found');
     }
 
     if (!isDriverOwner && driverProfileId != null) {
@@ -88,6 +76,33 @@ export class FranchiseRenewalService {
       }
     } else if (driverProfileId == null && driverProfile == null) {
       throw new BadRequestException('Driver is required');
+    }
+
+    if (!isDriverOwner && driverProfileId != null) {
+      const driverProfile = await this.driverProfileService.getOneById(
+        driverProfileId,
+        memberId,
+      );
+
+      if (!driverProfile) {
+        throw new BadRequestException('Driver does not exist');
+      }
+    } else if (driverProfileId == null && driverProfile == null) {
+      throw new BadRequestException('Driver is required');
+    }
+
+    if (!franchise) {
+      throw new BadRequestException('Franchise does not exist');
+    } else if (franchise.approvalStatus !== FranchiseApprovalStatus.Approved) {
+      throw new BadRequestException('Franchise not yet approved');
+    }
+
+    const transformedFranchise = transformFranchises(
+      franchise,
+    ) as FranchiseResponse;
+
+    if (!transformedFranchise.canRenew) {
+      throw new BadRequestException('Cannot renew franchise');
     }
   }
 
@@ -121,6 +136,7 @@ export class FranchiseRenewalService {
       relations: {
         driverProfile: true,
         todaAssociation: true,
+        franchiseStatusRemarks: true,
       },
     });
   }
@@ -137,6 +153,7 @@ export class FranchiseRenewalService {
       relations: {
         driverProfile: true,
         todaAssociation: true,
+        franchiseStatusRemarks: true,
       },
     });
   }
@@ -194,7 +211,7 @@ export class FranchiseRenewalService {
       franchise: { id: franchiseId },
     });
 
-    return this.franchiseRepo.save(franchiseRenewal);
+    return this.franchiseRenewalRepo.save(franchiseRenewal);
   }
 
   async update(
@@ -221,9 +238,9 @@ export class FranchiseRenewalService {
 
   async setApprovalStatus(
     id: number,
-    approvalStatus?: FranchiseApprovalStatus,
+    franchiseApprovalStatusDto: FranchiseApprovalStatusUpdateDto,
   ): Promise<FranchiseRenewal> {
-    const currentDate = dayjs();
+    const { approvalStatus, statusRemarks } = franchiseApprovalStatusDto;
 
     const franchiseRenewal = await this.franchiseRenewalRepo.findOne({
       where: { id },
@@ -249,7 +266,7 @@ export class FranchiseRenewalService {
         : franchiseRenewal.franchise;
 
     if (
-      !currentDate.isBetween(
+      !dayjs().isBetween(
         dayjs(previousTarget.expiryDate).subtract(
           ENABLE_RENEW_BEFORE_EXPIRY_DAYS,
           'd',
@@ -284,6 +301,7 @@ export class FranchiseRenewalService {
     await this.franchiseRenewalRepo.save({
       ...franchiseRenewal,
       approvalStatus: updatedApprovalStatus,
+      franchiseStatusRemarks: statusRemarks?.length ? statusRemarks : undefined,
     });
 
     return this.franchiseRenewalRepo.findOne({
@@ -291,6 +309,7 @@ export class FranchiseRenewalService {
       relations: {
         driverProfile: true,
         todaAssociation: true,
+        franchiseStatusRemarks: true,
       },
     });
   }

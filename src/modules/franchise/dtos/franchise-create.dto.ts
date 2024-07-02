@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsPositive,
   IsString,
+  Length,
   MaxLength,
   MinLength,
   ValidateNested,
@@ -14,8 +15,7 @@ import { DriverProfileCreateDto } from '#/modules/user/dtos/driver-profile-creat
 
 export class FranchiseCreateDto {
   @IsString()
-  @MinLength(15)
-  @MaxLength(15)
+  @Length(15, 15)
   mvFileNo: string;
 
   @IsString()

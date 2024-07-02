@@ -2,7 +2,11 @@ import { BaseResponseDto } from '#/common/dtos/base-response.dto';
 import { Expose, Type } from 'class-transformer';
 
 import { FeeType } from '../enums/rate-sheet.enum';
-import { RateSheetFeeResponseDto } from './rate-sheet-fee-response.dto';
+import { RateSheet } from '../entities/rate-sheet.entity';
+import {
+  RateSheetFeeResponse,
+  RateSheetFeeResponseDto,
+} from './rate-sheet-fee-response.dto';
 
 export class RateSheetResponseDto extends BaseResponseDto {
   @Expose()
@@ -15,3 +19,7 @@ export class RateSheetResponseDto extends BaseResponseDto {
   @Type(() => RateSheetFeeResponseDto)
   rateSheetFees: RateSheetFeeResponseDto[];
 }
+
+export type RateSheetResponse = Omit<RateSheet, 'rateSheetFees'> & {
+  rateSheetFees: RateSheetFeeResponse[];
+};

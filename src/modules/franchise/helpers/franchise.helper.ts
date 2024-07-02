@@ -3,8 +3,9 @@ import {
   ENABLE_RENEW_BEFORE_EXPIRY_DAYS,
   ENABLE_RENEW_AFTER_EXPIRY_DAYS,
 } from '../config/franchise.config';
+import { FranchiseApprovalStatus } from '../enums/franchise.enum';
 import { Franchise } from '../entities/franchise.entity';
-import { FranchiseRenewal } from '../entities/franchise-renewal-entity';
+import { FranchiseRenewal } from '../entities/franchise-renewal.entity';
 import { FranchiseResponse } from '../dtos/franchise-response.dto';
 
 export function transformFranchises(
@@ -13,54 +14,85 @@ export function transformFranchises(
 ): FranchiseResponse | FranchiseResponse[] {
   if (Array.isArray(franchises)) {
     return franchises.map((franchise) => {
-      if (!franchise.franchiseRenewals.length) {
-        const expiryStatus = getExpiryStatus(franchise.expiryDate);
-        return { ...franchise, ...expiryStatus };
-      }
+      const targetFranchise = {
+        ...franchise,
+        franchiseRenewals: !franchise.franchiseRenewals.length
+          ? []
+          : sortFranchiseRenewals(franchise.franchiseRenewals, allRenewals),
+      };
 
-      const franchiseRenewals = sortFranchiseRenewals(
-        franchise.franchiseRenewals,
-        allRenewals,
-      );
-
-      const expiryStatus = getExpiryStatus(franchiseRenewals[0].expiryDate);
-      return { ...franchise, ...expiryStatus, franchiseRenewals };
+      const expiryStatus = getExpiryStatus(targetFranchise);
+      return { ...franchise, ...expiryStatus };
     });
   }
 
-  if (!franchises.franchiseRenewals.length) {
-    const expiryStatus = getExpiryStatus(franchises.expiryDate);
-    return { ...franchises, ...expiryStatus };
-  }
+  const targetFranchise = {
+    ...franchises,
+    franchiseRenewals: !franchises.franchiseRenewals.length
+      ? []
+      : sortFranchiseRenewals(franchises.franchiseRenewals, allRenewals),
+  };
 
-  const franchiseRenewals = sortFranchiseRenewals(
-    franchises.franchiseRenewals,
-    allRenewals,
-  );
-
-  const expiryStatus = getExpiryStatus(franchiseRenewals[0].expiryDate);
-  return { ...franchises, ...expiryStatus, franchiseRenewals };
+  const expiryStatus = getExpiryStatus(targetFranchise);
+  return { ...franchises, ...expiryStatus };
 }
 
-export function getExpiryStatus(expiryDate: Date | null) {
-  if (!expiryDate)
-    return {
-      isExpired: false,
-      canRenew: false,
-    };
-
+export function getExpiryStatus(franchise: Franchise) {
   const currentDate = dayjs();
 
-  const isExpired = currentDate.isAfter(dayjs(expiryDate), 'd');
+  if (!franchise.franchiseRenewals.length) {
+    if (!franchise.expiryDate)
+      return {
+        isExpired: false,
+        canRenew: false,
+      };
 
-  const canRenew = currentDate.isBetween(
-    dayjs(expiryDate).subtract(ENABLE_RENEW_BEFORE_EXPIRY_DAYS, 'd'),
-    dayjs(expiryDate).add(ENABLE_RENEW_AFTER_EXPIRY_DAYS, 'd'),
-    'day',
-    '[]',
-  );
+    const isExpired = currentDate.isAfter(dayjs(franchise.expiryDate), 'd');
+    const canRenew = currentDate.isBetween(
+      dayjs(franchise.expiryDate).subtract(
+        ENABLE_RENEW_BEFORE_EXPIRY_DAYS,
+        'd',
+      ),
+      dayjs(franchise.expiryDate).add(ENABLE_RENEW_AFTER_EXPIRY_DAYS, 'd'),
+      'day',
+      '[]',
+    );
 
-  return { isExpired, canRenew };
+    return { isExpired, canRenew };
+  } else {
+    let isExpired = false;
+    let canRenew = false;
+
+    const target = franchise.franchiseRenewals[0];
+
+    if (
+      target.approvalStatus === FranchiseApprovalStatus.Approved ||
+      target.approvalStatus === FranchiseApprovalStatus.Rejected ||
+      target.approvalStatus === FranchiseApprovalStatus.Canceled
+    ) {
+      let expiryDate = target.expiryDate;
+
+      if (
+        target.approvalStatus === FranchiseApprovalStatus.Rejected ||
+        target.approvalStatus === FranchiseApprovalStatus.Canceled
+      ) {
+        expiryDate =
+          franchise.franchiseRenewals.length > 1
+            ? franchise.franchiseRenewals[1].expiryDate
+            : franchise.expiryDate;
+      }
+
+      isExpired = currentDate.isAfter(dayjs(expiryDate), 'd');
+      canRenew = currentDate.isBetween(
+        dayjs(expiryDate).subtract(ENABLE_RENEW_BEFORE_EXPIRY_DAYS, 'd'),
+        dayjs(expiryDate).add(ENABLE_RENEW_AFTER_EXPIRY_DAYS, 'd'),
+        'day',
+        '[]',
+      );
+    }
+
+    return { isExpired, canRenew };
+  }
 }
 
 function sortFranchiseRenewals(
@@ -71,5 +103,12 @@ function sortFranchiseRenewals(
     (a, b) => b.createdAt.valueOf() - a.createdAt.valueOf(),
   );
 
-  return allRenewals ? sortedFranchiseRenewals : [sortedFranchiseRenewals[0]];
+  if (allRenewals) return sortedFranchiseRenewals;
+
+  const latest = sortedFranchiseRenewals[0];
+  const lastApproved = sortedFranchiseRenewals
+    .slice(1, sortedFranchiseRenewals.length)
+    .find((fr) => fr.approvalStatus === FranchiseApprovalStatus.Approved);
+
+  return lastApproved ? [latest, lastApproved] : [latest];
 }

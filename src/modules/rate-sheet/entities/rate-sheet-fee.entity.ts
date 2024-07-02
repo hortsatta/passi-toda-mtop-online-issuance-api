@@ -11,6 +11,12 @@ export class RateSheetFee extends BaseEntity {
   @Column({ type: 'bigint' })
   amount: number;
 
+  @Column({ type: 'boolean', default: false })
+  isPenalty: boolean;
+
+  @Column({ type: 'int', nullable: true })
+  activatePenaltyAfterExpiryDays: number;
+
   @ManyToOne(() => RateSheet, (rateSheet) => rateSheet.rateSheetFees, {
     onDelete: 'CASCADE',
   })

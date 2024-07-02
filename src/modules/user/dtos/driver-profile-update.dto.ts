@@ -8,7 +8,7 @@ import {
   MaxDate,
   IsPhoneNumber,
   IsEnum,
-  MinLength,
+  Length,
 } from 'class-validator';
 
 import dayjs from '#/common/config/dayjs.config';
@@ -64,8 +64,7 @@ export class DriverProfileUpdateDto {
   address: string;
 
   @IsString()
-  @MinLength(11)
-  @MaxLength(11)
+  @Length(11, 11)
   @IsOptional()
   driverLicenseNo: string;
 }

@@ -1,10 +1,11 @@
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 
 import { Base as BaseEntity } from '#/common/entities/base-entity';
 import { DriverProfile } from '#/modules/user/entities/driver-profile.entity';
 import { FranchiseApprovalStatus } from '../enums/franchise.enum';
 import { TodaAssociation } from './toda-association.entity';
 import { Franchise } from './franchise.entity';
+import { FranchiseStatusRemark } from './franchise-status-remark.entity';
 
 @Entity()
 export class FranchiseRenewal extends BaseEntity {
@@ -54,6 +55,13 @@ export class FranchiseRenewal extends BaseEntity {
   })
   @JoinColumn()
   driverProfile: DriverProfile;
+
+  @OneToMany(
+    () => FranchiseStatusRemark,
+    (franchiseStatusRemark) => franchiseStatusRemark.franchiseRenewal,
+    { nullable: true },
+  )
+  franchiseStatusRemarks: FranchiseStatusRemark[];
 
   @ManyToOne(() => Franchise, (franchise) => franchise.franchiseRenewals)
   @JoinColumn()

@@ -14,12 +14,14 @@ import {
   Repository,
 } from 'typeorm';
 
+import dayjs from '#/common/config/dayjs.config';
 import { FranchiseApprovalStatus } from '../franchise/enums/franchise.enum';
 import { FranchiseService } from '../franchise/services/franchise.service';
 import { FeeType } from './enums/rate-sheet.enum';
 import { RateSheet } from './entities/rate-sheet.entity';
 import { RateSheetCreateDto } from './dtos/rate-sheet-create.dto';
 import { RateSheetUpdateDto } from './dtos/rate-sheet-update.dto';
+import { RateSheetResponse } from './dtos/rate-sheet-response.dto';
 
 @Injectable()
 export class RateSheetService {
@@ -107,7 +109,7 @@ export class RateSheetService {
 
   async getFranchiseRatesByFranchiseId(
     franchiseId: number,
-  ): Promise<RateSheet[]> {
+  ): Promise<RateSheetResponse[]> {
     const franchise = await this.franchiseService.getOneById(franchiseId);
 
     if (!franchise) throw new NotFoundException('Franchise not found');
@@ -162,6 +164,92 @@ export class RateSheetService {
       order: { createdAt: 'DESC' },
       relations: { rateSheetFees: true },
     });
+
+    // if current franchise renewal status is paid or approved then get penalties if any
+    if (
+      franchise.franchiseRenewals.length &&
+      (franchise.franchiseRenewals[0].approvalStatus ===
+        FranchiseApprovalStatus.Paid ||
+        franchise.franchiseRenewals[0].approvalStatus ===
+          FranchiseApprovalStatus.Approved)
+    ) {
+      const targetDate = dayjs(franchise.franchiseRenewals[0].approvalDate);
+
+      const expiryDate =
+        franchise.franchiseRenewals.length > 1
+          ? franchise.franchiseRenewals[1].expiryDate
+          : franchise.expiryDate;
+
+      const diffDays = targetDate.diff(dayjs(expiryDate), 'd');
+
+      // Apply only a single penalty
+      const penaltyFee = renewalRateSheet.rateSheetFees
+        .filter((fee) => fee.isPenalty)
+        .sort(
+          (a, b) =>
+            b.activatePenaltyAfterExpiryDays - a.activatePenaltyAfterExpiryDays,
+        )
+        .find((fee) => diffDays >= fee.activatePenaltyAfterExpiryDays);
+
+      const transformedRateSheeFees = renewalRateSheet.rateSheetFees.map(
+        (fee) => {
+          if (fee.id === penaltyFee.id) {
+            return {
+              ...fee,
+              isPenaltyActive: true,
+            };
+          }
+
+          return fee;
+        },
+      );
+
+      return [
+        registrationRateSheet,
+        { ...renewalRateSheet, rateSheetFees: transformedRateSheeFees },
+      ];
+    }
+
+    // Check for latest renewal rate with penalties if expired and can renew
+    if (
+      franchise.franchiseRenewals.length &&
+      renewalRateSheet.rateSheetFees.some((fee) => fee.isPenalty)
+    ) {
+      const currentDate = dayjs();
+
+      const expiryDate =
+        franchise.franchiseRenewals.find((fr) => fr.expiryDate != null)
+          ?.expiryDate || franchise.expiryDate;
+
+      const diffDays = currentDate.diff(dayjs(expiryDate), 'd');
+
+      // Apply only a single penalty
+      const penaltyFee = renewalRateSheet.rateSheetFees
+        .filter((fee) => fee.isPenalty)
+        .sort(
+          (a, b) =>
+            b.activatePenaltyAfterExpiryDays - a.activatePenaltyAfterExpiryDays,
+        )
+        .find((fee) => diffDays >= fee.activatePenaltyAfterExpiryDays);
+
+      const transformedRateSheeFees = renewalRateSheet.rateSheetFees.map(
+        (fee) => {
+          if (fee.id === penaltyFee.id) {
+            return {
+              ...fee,
+              isPenaltyActive: true,
+            };
+          }
+
+          return fee;
+        },
+      );
+
+      return [
+        registrationRateSheet,
+        { ...renewalRateSheet, rateSheetFees: transformedRateSheeFees },
+      ];
+    }
 
     return [registrationRateSheet, renewalRateSheet];
   }

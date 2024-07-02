@@ -9,7 +9,7 @@ import {
 import dayjs from '#/common/config/dayjs.config';
 import { EXPIRY_AFTER_APPROVAL_DAYS } from '../config/franchise.config';
 import { FranchiseApprovalStatus } from '../enums/franchise.enum';
-import { FranchiseRenewal } from '../entities/franchise-renewal-entity';
+import { FranchiseRenewal } from '../entities/franchise-renewal.entity';
 
 @EventSubscriber()
 export class FranchiseRenewalSubscriber

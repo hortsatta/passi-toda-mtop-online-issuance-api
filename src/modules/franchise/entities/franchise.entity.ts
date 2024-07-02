@@ -5,7 +5,8 @@ import { User } from '#/modules/user/entities/user.entity';
 import { DriverProfile } from '#/modules/user/entities/driver-profile.entity';
 import { FranchiseApprovalStatus } from '../enums/franchise.enum';
 import { TodaAssociation } from './toda-association.entity';
-import { FranchiseRenewal } from './franchise-renewal-entity';
+import { FranchiseStatusRemark } from './franchise-status-remark.entity';
+import { FranchiseRenewal } from './franchise-renewal.entity';
 
 @Entity()
 export class Franchise extends BaseEntity {
@@ -61,6 +62,13 @@ export class Franchise extends BaseEntity {
   })
   @JoinColumn()
   driverProfile: DriverProfile;
+
+  @OneToMany(
+    () => FranchiseStatusRemark,
+    (franchiseStatusRemark) => franchiseStatusRemark.franchise,
+    { nullable: true },
+  )
+  franchiseStatusRemarks: FranchiseStatusRemark[];
 
   @OneToMany(
     () => FranchiseRenewal,
