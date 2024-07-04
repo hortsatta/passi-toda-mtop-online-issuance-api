@@ -22,7 +22,6 @@ import { FranchiseRenewalCreateDto } from '../dtos/franchise-renewal-create.dto'
 import { FranchiseRenewalResponseDto } from '../dtos/franchise-renewal-response.dto';
 import { FranchiseRenewalUpdateDto } from '../dtos/franchise-renewal-update.dto';
 import { FranchiseApprovalStatusUpdateDto } from '../dtos/franchise-approval-status-update.dto';
-import { FranchiseResponseDto } from '../dtos/franchise-response.dto';
 import { FranchiseRenewalService } from '../services/franchise-renewal.service';
 
 const TREASURER_URL = '/treasurer';
@@ -79,7 +78,7 @@ export class FranchiseRenewalController {
 
   @Patch('/:id')
   @UseAuthGuard(UserRole.Member)
-  @UseSerializeInterceptor(FranchiseResponseDto)
+  @UseSerializeInterceptor(FranchiseRenewalResponseDto)
   update(
     @Param('id') id: string,
     @Body() body: FranchiseRenewalUpdateDto,
@@ -107,6 +106,19 @@ export class FranchiseRenewalController {
     }
 
     return this.franchiseRenewalService.setApprovalStatus(+id, body);
+  }
+
+  @Patch(`${TREASURER_URL}/approve/:id`)
+  @UseAuthGuard(UserRole.Treasurer)
+  @UseSerializeInterceptor(FranchiseRenewalResponseDto)
+  approveTreasurerFranchise(
+    @Param('id') id: string,
+    @Body() body: { paymentORNo: string },
+  ): Promise<FranchiseRenewal> {
+    return this.franchiseRenewalService.setTreasurerApprovalStatus(
+      +id,
+      body.paymentORNo,
+    );
   }
 
   @Delete('/:id')

@@ -34,6 +34,7 @@ export class UploadController {
     todaAssocMembershipImgUrl?: string;
     driverLicenseNoImgUrl?: string;
     brgyClearanceImgUrl?: string;
+    ctcCedulaImgUrl?: string;
     voterRegRecordImgUrl?: string;
   }> {
     return this.uploadService.uploadFranchiseImages(files, +user.id);
@@ -51,7 +52,7 @@ export class UploadController {
     vehicleCRImgUrl?: string;
     todaAssocMembershipImgUrl?: string;
     driverLicenseNoImgUrl?: string;
-    brgyClearanceImgUrl?: string;
+    ctcCedulaImgUrl?: string;
     voterRegRecordImgUrl?: string;
   }> {
     return this.uploadService.uploadFranchiseImages(

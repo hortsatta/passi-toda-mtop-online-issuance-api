@@ -32,6 +32,9 @@ export class FranchiseResponseDto extends BaseResponseDto {
   brgyClearanceImgUrl: string;
 
   @Expose()
+  ctcCedulaImgUrl: string;
+
+  @Expose()
   voterRegRecordImgUrl: string;
 
   @Expose()
@@ -50,11 +53,14 @@ export class FranchiseResponseDto extends BaseResponseDto {
   canRenew: boolean;
 
   @Expose()
-  isDriverOwner: boolean;
+  paymentORNo: string;
 
   @Expose()
   @Type(() => TodaAssociationResponseDto)
   todaAssociation: TodaAssociationResponseDto;
+
+  @Expose()
+  isDriverOwner: boolean;
 
   @Expose()
   @Type(() => DriverProfileResponseDto)

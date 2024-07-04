@@ -31,6 +31,9 @@ export class Franchise extends BaseEntity {
   @Column({ type: 'text' })
   brgyClearanceImgUrl: string;
 
+  @Column({ type: 'text' })
+  ctcCedulaImgUrl: string;
+
   @Column({ type: 'text', nullable: true })
   voterRegRecordImgUrl: string;
 
@@ -46,6 +49,9 @@ export class Franchise extends BaseEntity {
 
   @Column({ type: 'timestamp', nullable: true })
   expiryDate: Date;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  paymentORNo: string;
 
   @ManyToOne(
     () => TodaAssociation,
@@ -66,7 +72,7 @@ export class Franchise extends BaseEntity {
   @OneToMany(
     () => FranchiseStatusRemark,
     (franchiseStatusRemark) => franchiseStatusRemark.franchise,
-    { nullable: true },
+    { cascade: true, nullable: true },
   )
   franchiseStatusRemarks: FranchiseStatusRemark[];
 

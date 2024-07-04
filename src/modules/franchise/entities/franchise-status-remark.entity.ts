@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, ManyToOne } from 'typeorm';
 
 import { Base as BaseEntity } from '#/common/entities/base-entity';
 import { Franchise } from './franchise.entity';
@@ -12,14 +12,17 @@ export class FranchiseStatusRemark extends BaseEntity {
   @Column({ type: 'text' })
   remark: string;
 
-  @ManyToOne(() => Franchise, (franchise) => franchise.franchiseStatusRemarks)
-  @JoinColumn()
+  @ManyToOne(() => Franchise, (franchise) => franchise.franchiseStatusRemarks, {
+    onDelete: 'CASCADE',
+  })
   franchise: Franchise;
 
   @ManyToOne(
     () => FranchiseRenewal,
     (franchiseRenewal) => franchiseRenewal.franchiseStatusRemarks,
+    {
+      onDelete: 'CASCADE',
+    },
   )
-  @JoinColumn()
   franchiseRenewal: FranchiseRenewal;
 }

@@ -30,13 +30,15 @@ export class FranchiseRenewalSubscriber
     ) {
       event.entity.approvalDate = null;
     } else {
-      const currentDate = dayjs();
-      event.entity.approvalDate = dayjs().toDate();
-      // Set expiry date by 1year when status is approved
-      if (event.entity.approvalStatus === FranchiseApprovalStatus.Approved) {
-        event.entity.expiryDate = currentDate
-          .add(EXPIRY_AFTER_APPROVAL_DAYS, 'd')
-          .toDate();
+      if (event.entity.approvalStatus !== FranchiseApprovalStatus.Revoked) {
+        const currentDate = dayjs();
+        event.entity.approvalDate = dayjs().toDate();
+        // Set expiry date by 1year when status is approved
+        if (event.entity.approvalStatus === FranchiseApprovalStatus.Approved) {
+          event.entity.expiryDate = currentDate
+            .add(EXPIRY_AFTER_APPROVAL_DAYS, 'd')
+            .toDate();
+        }
       }
     }
   }
@@ -56,13 +58,17 @@ export class FranchiseRenewalSubscriber
       ) {
         event.entity.approvalDate = null;
       } else {
-        const currentDate = dayjs();
-        event.entity.approvalDate = dayjs().toDate();
-        // Set expiry date by 1year when status is approved
-        if (event.entity.approvalStatus === FranchiseApprovalStatus.Approved) {
-          event.entity.expiryDate = currentDate
-            .add(EXPIRY_AFTER_APPROVAL_DAYS, 'd')
-            .toDate();
+        if (event.entity.approvalStatus !== FranchiseApprovalStatus.Revoked) {
+          const currentDate = dayjs();
+          event.entity.approvalDate = dayjs().toDate();
+          // Set expiry date by 1year when status is approved
+          if (
+            event.entity.approvalStatus === FranchiseApprovalStatus.Approved
+          ) {
+            event.entity.expiryDate = currentDate
+              .add(EXPIRY_AFTER_APPROVAL_DAYS, 'd')
+              .toDate();
+          }
         }
       }
     }

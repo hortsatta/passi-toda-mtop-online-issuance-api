@@ -4,6 +4,7 @@ import {
   IsOptional,
   IsPositive,
   IsString,
+  MaxLength,
 } from 'class-validator';
 
 export class FranchiseRenewalUpdateDto {
@@ -29,7 +30,16 @@ export class FranchiseRenewalUpdateDto {
 
   @IsString()
   @IsOptional()
+  ctcCedulaImgUrl: string;
+
+  @IsString()
+  @IsOptional()
   voterRegRecordImgUrl: string;
+
+  @IsString()
+  @MaxLength(255)
+  @IsOptional()
+  paymentORNo: string;
 
   @IsInt()
   @IsPositive()

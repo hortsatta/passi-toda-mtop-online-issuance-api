@@ -35,6 +35,7 @@ export class UploadService {
     todaAssocMembershipImgUrl?: string;
     driverLicenseNoImgUrl?: string;
     brgyClearanceImgUrl?: string;
+    ctcCedulaImgUrl?: string;
     voterRegRecordImgUrl?: string;
   }> {
     if (!files?.length) {

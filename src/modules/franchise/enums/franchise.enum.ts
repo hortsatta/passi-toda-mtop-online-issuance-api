@@ -5,4 +5,5 @@ export enum FranchiseApprovalStatus {
   Approved = 'approved',
   Rejected = 'rejected',
   Canceled = 'canceled',
+  Revoked = 'revoked',
 }

@@ -123,7 +123,8 @@ export class FranchiseRenewalService {
     if (
       franchiseRenewal.approvalStatus === FranchiseApprovalStatus.Validated ||
       franchiseRenewal.approvalStatus === FranchiseApprovalStatus.Paid ||
-      franchiseRenewal.approvalStatus === FranchiseApprovalStatus.Approved
+      franchiseRenewal.approvalStatus === FranchiseApprovalStatus.Approved ||
+      franchiseRenewal.approvalStatus === FranchiseApprovalStatus.Revoked
     ) {
       throw new BadRequestException('Vehicle already registered');
     }
@@ -250,8 +251,17 @@ export class FranchiseRenewalService {
     if (!franchiseRenewal)
       throw new NotFoundException('Franchise renewal not found');
 
+    if (
+      franchiseRenewal.approvalStatus !== FranchiseApprovalStatus.Approved &&
+      approvalStatus === FranchiseApprovalStatus.Revoked
+    )
+      throw new BadRequestException('Cannot set franchise status');
+
     const latestFranchiseRenewals = await this.franchiseRenewalRepo.find({
-      where: { franchise: { id: franchiseRenewal.franchise.id } },
+      where: {
+        franchise: { id: franchiseRenewal.franchise.id },
+        approvalStatus: FranchiseApprovalStatus.Approved,
+      },
       order: { createdAt: 'DESC' },
       take: 2,
       skip: 0,
@@ -302,6 +312,78 @@ export class FranchiseRenewalService {
       ...franchiseRenewal,
       approvalStatus: updatedApprovalStatus,
       franchiseStatusRemarks: statusRemarks?.length ? statusRemarks : undefined,
+    });
+
+    return this.franchiseRenewalRepo.findOne({
+      where: { id },
+      relations: {
+        driverProfile: true,
+        todaAssociation: true,
+        franchiseStatusRemarks: true,
+      },
+    });
+  }
+
+  async setTreasurerApprovalStatus(
+    id: number,
+    paymentORNo: string,
+  ): Promise<FranchiseRenewal> {
+    if (!paymentORNo.length) {
+      throw new BadRequestException('Invalid OR Number');
+    }
+
+    const franchiseRenewal = await this.franchiseRenewalRepo.findOne({
+      where: { id },
+      relations: { franchise: true },
+    });
+    // Return error if user row does not exist
+    if (!franchiseRenewal)
+      throw new NotFoundException('Franchise renewal not found');
+
+    if (franchiseRenewal.approvalStatus !== FranchiseApprovalStatus.Validated)
+      throw new BadRequestException('Cannot set franchise status');
+
+    const latestFranchiseRenewals = await this.franchiseRenewalRepo.find({
+      where: {
+        franchise: { id: franchiseRenewal.franchise.id },
+        approvalStatus: FranchiseApprovalStatus.Approved,
+      },
+      order: { createdAt: 'DESC' },
+      take: 2,
+      skip: 0,
+    });
+
+    if (latestFranchiseRenewals[0].id !== franchiseRenewal.id)
+      throw new NotFoundException('Franchise renewal invalid');
+
+    const previousTarget =
+      latestFranchiseRenewals.length > 1
+        ? latestFranchiseRenewals[1]
+        : franchiseRenewal.franchise;
+
+    if (
+      !dayjs().isBetween(
+        dayjs(previousTarget.expiryDate).subtract(
+          ENABLE_RENEW_BEFORE_EXPIRY_DAYS,
+          'd',
+        ),
+        dayjs(previousTarget.expiryDate).add(
+          ENABLE_RENEW_AFTER_EXPIRY_DAYS,
+          'd',
+        ),
+        'day',
+        '[]',
+      )
+    ) {
+      throw new BadRequestException('Cannot set franchise status');
+    }
+
+    // TODO check franchise if vehicleORNo is correct then save
+
+    await this.franchiseRenewalRepo.save({
+      ...franchiseRenewal,
+      approvalStatus: FranchiseApprovalStatus.Paid,
+      paymentORNo,
     });
 
     return this.franchiseRenewalRepo.findOne({

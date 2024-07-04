@@ -91,6 +91,7 @@ export class FranchiseService {
     }
 
     if (
+      franchiseResponse.approvalStatus === FranchiseApprovalStatus.Revoked ||
       (franchiseResponse.approvalStatus === FranchiseApprovalStatus.Approved &&
         !franchiseResponse.isExpired) ||
       (franchiseResponse.approvalStatus === FranchiseApprovalStatus.Approved &&
@@ -124,6 +125,7 @@ export class FranchiseService {
         FranchiseApprovalStatus.Validated,
         FranchiseApprovalStatus.Paid,
         FranchiseApprovalStatus.Approved,
+        FranchiseApprovalStatus.Revoked,
       ]),
     };
 
@@ -600,7 +602,11 @@ export class FranchiseService {
     // Return error if user row does not exist
     if (!franchise) {
       throw new NotFoundException('Franchise not found');
-    } else if (franchise.franchiseRenewals.length) {
+    } else if (
+      franchise.franchiseRenewals.length ||
+      (franchise.approvalStatus !== FranchiseApprovalStatus.Approved &&
+        approvalStatus === FranchiseApprovalStatus.Revoked)
+    ) {
       throw new BadRequestException('Cannot set franchise status');
     }
 
@@ -642,6 +648,53 @@ export class FranchiseService {
     });
 
     return transformFranchises(updatedFranchise) as FranchiseResponse;
+  }
+
+  async setTreasurerApprovalStatus(id: number, paymentORNo: string) {
+    if (!paymentORNo.length) {
+      throw new BadRequestException('Invalid OR Number');
+    }
+
+    const franchise = await this.franchiseRepo.findOne({
+      where: { id },
+      relations: { franchiseRenewals: true },
+    });
+    // Return error if user row does not exist
+    if (!franchise) {
+      throw new NotFoundException('Franchise not found');
+    } else if (
+      franchise.franchiseRenewals.length ||
+      franchise.approvalStatus !== FranchiseApprovalStatus.Validated
+    ) {
+      throw new BadRequestException('Cannot set franchise status');
+    }
+
+    // TODO check franchise if vehicleORNo is correct then save
+
+    await this.franchiseRepo.save({
+      ...franchise,
+      approvalStatus: FranchiseApprovalStatus.Paid,
+      paymentORNo,
+    });
+
+    const updatedFranchise = await this.franchiseRepo.findOne({
+      where: { id },
+      relations: {
+        user: true,
+        driverProfile: true,
+        todaAssociation: true,
+        franchiseStatusRemarks: true,
+        franchiseRenewals: {
+          todaAssociation: true,
+          driverProfile: true,
+          franchiseStatusRemarks: true,
+        },
+      },
+    });
+
+    return transformFranchises(updatedFranchise) as FranchiseResponse;
+
+    // TODO
   }
 
   async delete(id: number, memberId: number): Promise<boolean> {

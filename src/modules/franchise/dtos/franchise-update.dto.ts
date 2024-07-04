@@ -42,7 +42,16 @@ export class FranchiseUpdateDto {
 
   @IsString()
   @IsOptional()
+  ctcCedulaImgUrl: string;
+
+  @IsString()
+  @IsOptional()
   voterRegRecordImgUrl: string;
+
+  @IsString()
+  @MaxLength(255)
+  @IsOptional()
+  paymentORNo: string;
 
   @IsInt()
   @IsPositive()

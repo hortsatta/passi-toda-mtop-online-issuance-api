@@ -60,6 +60,8 @@ export class ReportService {
         franchise.approvalStatus === FranchiseApprovalStatus.Canceled,
     ).length;
 
+    // TODO revoked
+
     return {
       totalApplicationCount: totalApplication.length,
       totalPendingValidationCount,

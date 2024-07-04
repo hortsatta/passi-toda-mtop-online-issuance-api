@@ -39,6 +39,9 @@ export class FranchiseCreateDto {
   brgyClearanceImgUrl: string;
 
   @IsString()
+  ctcCedulaImgUrl: string;
+
+  @IsString()
   @IsOptional()
   voterRegRecordImgUrl: string;
 

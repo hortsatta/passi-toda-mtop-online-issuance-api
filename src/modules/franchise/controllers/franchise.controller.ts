@@ -142,6 +142,8 @@ export class FranchiseController {
       take,
     );
 
+    // TODO revoked
+
     if (user.role === UserRole.Treasurer) {
       return {
         validatedList,
@@ -245,6 +247,19 @@ export class FranchiseController {
     }
 
     return this.franchiseService.setApprovalStatus(+id, body);
+  }
+
+  @Patch(`${TREASURER_URL}/approve/:id`)
+  @UseAuthGuard(UserRole.Treasurer)
+  @UseSerializeInterceptor(FranchiseResponseDto)
+  approveTreasurerFranchise(
+    @Param('id') id: string,
+    @Body() body: { paymentORNo: string },
+  ): Promise<FranchiseResponse> {
+    return this.franchiseService.setTreasurerApprovalStatus(
+      +id,
+      body.paymentORNo,
+    );
   }
 
   @Delete('/:id')
