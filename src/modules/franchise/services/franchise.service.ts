@@ -4,6 +4,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { MailerService } from '@nestjs-modules/mailer';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   Between,
@@ -30,6 +32,8 @@ import { FranchiseResponse } from '../dtos/franchise-response.dto';
 @Injectable()
 export class FranchiseService {
   constructor(
+    private readonly configService: ConfigService,
+    private readonly mailerService: MailerService,
     @InjectRepository(Franchise)
     private readonly franchiseRepo: Repository<Franchise>,
     @InjectRepository(TodaAssociation)
@@ -139,6 +143,61 @@ export class FranchiseService {
     if (existingFranchise) {
       throw new BadRequestException('Vehicle already registered');
     }
+  }
+
+  async sendEmailFranchiseRegistration(franchise: Franchise) {
+    const {
+      id,
+      plateNo,
+      user: { userProfile, email },
+    } = franchise;
+
+    const url = `${this.configService.get<string>('APP_BASE_URL')}/m/franchises/${id}`;
+
+    await this.mailerService.sendMail({
+      to: email,
+      subject: `${plateNo.toUpperCase()} Franchise Registration`,
+      template: './franchise-issuance',
+      context: {
+        name: userProfile.firstName || email,
+        plateNo,
+        url,
+        issuanceText: 'registration',
+      },
+    });
+  }
+
+  async sendEmailApprovalStatusChange(franchise: Franchise) {
+    const {
+      id,
+      plateNo,
+      approvalStatus,
+      user: { userProfile, email },
+    } = franchise;
+
+    const approvalStatusText = {
+      [FranchiseApprovalStatus.Approved]: 'Approved',
+      [FranchiseApprovalStatus.Canceled]: 'Canceled',
+      [FranchiseApprovalStatus.Paid]: 'Paid',
+      [FranchiseApprovalStatus.PendingValidation]: 'Pending Validation',
+      [FranchiseApprovalStatus.Rejected]: 'Rejected',
+      [FranchiseApprovalStatus.Revoked]: 'Revoked',
+      [FranchiseApprovalStatus.Validated]: 'Validated',
+    };
+
+    const url = `${this.configService.get<string>('APP_BASE_URL')}/m/franchises/${id}`;
+
+    await this.mailerService.sendMail({
+      to: email,
+      subject: `${plateNo.toUpperCase()} Franchise has been Updated`,
+      template: './franchise-approval-status-change',
+      context: {
+        name: userProfile.firstName || email,
+        plateNo,
+        approvalStatus: approvalStatusText[approvalStatus],
+        url,
+      },
+    });
   }
 
   // TODO get paginated
@@ -554,6 +613,13 @@ export class FranchiseService {
 
     const newFranchise = await this.franchiseRepo.save(franchise);
 
+    const targetFranchise = await this.franchiseRepo.findOne({
+      where: { id: newFranchise.id },
+      relations: { user: true },
+    });
+
+    await this.sendEmailFranchiseRegistration(targetFranchise);
+
     return { ...newFranchise, canRenew: false, isExpired: false };
   }
 
@@ -647,6 +713,8 @@ export class FranchiseService {
       },
     });
 
+    await this.sendEmailApprovalStatusChange(updatedFranchise);
+
     return transformFranchises(updatedFranchise) as FranchiseResponse;
   }
 
@@ -691,6 +759,8 @@ export class FranchiseService {
         },
       },
     });
+
+    await this.sendEmailApprovalStatusChange(updatedFranchise);
 
     return transformFranchises(updatedFranchise) as FranchiseResponse;
 

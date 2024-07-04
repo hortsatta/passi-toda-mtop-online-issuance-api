@@ -4,6 +4,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { MailerService } from '@nestjs-modules/mailer';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Not, Repository } from 'typeorm';
 
@@ -26,6 +28,8 @@ import { FranchiseResponse } from '../dtos/franchise-response.dto';
 @Injectable()
 export class FranchiseRenewalService {
   constructor(
+    private readonly configService: ConfigService,
+    private readonly mailerService: MailerService,
     @InjectRepository(FranchiseRenewal)
     private readonly franchiseRenewalRepo: Repository<FranchiseRenewal>,
     @InjectRepository(Franchise)
@@ -130,6 +134,65 @@ export class FranchiseRenewalService {
     }
   }
 
+  async sendEmailFranchiseRenewal(franchise: Franchise) {
+    const {
+      id,
+      plateNo,
+      user: { userProfile, email },
+    } = franchise;
+
+    const url = `${this.configService.get<string>('APP_BASE_URL')}/m/franchises/${id}`;
+
+    await this.mailerService.sendMail({
+      to: email,
+      subject: `${plateNo.toUpperCase()} Franchise Renewal`,
+      template: './franchise-issuance',
+      context: {
+        name: userProfile.firstName || email,
+        plateNo,
+        url,
+        issuanceText: 'renewal',
+      },
+    });
+  }
+
+  async sendEmailApprovalStatusChange(
+    franchiseRenewal: FranchiseRenewal,
+    franchise: Franchise,
+  ) {
+    const approvalStatus = franchiseRenewal.approvalStatus;
+
+    const {
+      id,
+      plateNo,
+      user: { userProfile, email },
+    } = franchise;
+
+    const approvalStatusText = {
+      [FranchiseApprovalStatus.Approved]: 'Approved',
+      [FranchiseApprovalStatus.Canceled]: 'Canceled',
+      [FranchiseApprovalStatus.Paid]: 'Paid',
+      [FranchiseApprovalStatus.PendingValidation]: 'Pending Validation',
+      [FranchiseApprovalStatus.Rejected]: 'Rejected',
+      [FranchiseApprovalStatus.Revoked]: 'Revoked',
+      [FranchiseApprovalStatus.Validated]: 'Validated',
+    };
+
+    const url = `${this.configService.get<string>('APP_BASE_URL')}/m/franchises/${id}`;
+
+    await this.mailerService.sendMail({
+      to: email,
+      subject: `${plateNo.toUpperCase()} Franchise has been Updated`,
+      template: './franchise-approval-status-change',
+      context: {
+        name: userProfile.firstName || email,
+        plateNo,
+        approvalStatus: approvalStatusText[approvalStatus],
+        url,
+      },
+    });
+  }
+
   getOneById(id: number, memberId?: number): Promise<FranchiseRenewal> {
     const where = memberId ? { id, user: { id: memberId } } : { id };
     return this.franchiseRenewalRepo.findOne({
@@ -212,7 +275,17 @@ export class FranchiseRenewalService {
       franchise: { id: franchiseId },
     });
 
-    return this.franchiseRenewalRepo.save(franchiseRenewal);
+    const newFranchiseRenewal =
+      await this.franchiseRenewalRepo.save(franchiseRenewal);
+
+    const targetFranchiseRenewal = await this.franchiseRenewalRepo.findOne({
+      where: { id: newFranchiseRenewal.id },
+      relations: { franchise: { user: true } },
+    });
+
+    await this.sendEmailFranchiseRenewal(targetFranchiseRenewal.franchise);
+
+    return newFranchiseRenewal;
   }
 
   async update(
@@ -245,7 +318,7 @@ export class FranchiseRenewalService {
 
     const franchiseRenewal = await this.franchiseRenewalRepo.findOne({
       where: { id },
-      relations: { franchise: true },
+      relations: { franchise: { user: true } },
     });
     // Return error if user row does not exist
     if (!franchiseRenewal)
@@ -314,14 +387,22 @@ export class FranchiseRenewalService {
       franchiseStatusRemarks: statusRemarks?.length ? statusRemarks : undefined,
     });
 
-    return this.franchiseRenewalRepo.findOne({
+    const targetFranchiseRenewal = await this.franchiseRenewalRepo.findOne({
       where: { id },
       relations: {
         driverProfile: true,
         todaAssociation: true,
         franchiseStatusRemarks: true,
+        franchise: { user: true },
       },
     });
+
+    await this.sendEmailApprovalStatusChange(
+      targetFranchiseRenewal,
+      franchiseRenewal.franchise,
+    );
+
+    return targetFranchiseRenewal;
   }
 
   async setTreasurerApprovalStatus(
@@ -386,7 +467,7 @@ export class FranchiseRenewalService {
       paymentORNo,
     });
 
-    return this.franchiseRenewalRepo.findOne({
+    const targetFranchiseRenewal = await this.franchiseRenewalRepo.findOne({
       where: { id },
       relations: {
         driverProfile: true,
@@ -394,6 +475,13 @@ export class FranchiseRenewalService {
         franchiseStatusRemarks: true,
       },
     });
+
+    await this.sendEmailApprovalStatusChange(
+      targetFranchiseRenewal,
+      franchiseRenewal.franchise,
+    );
+
+    return targetFranchiseRenewal;
   }
 
   async delete(id: number, memberId: number): Promise<boolean> {

@@ -28,7 +28,7 @@ export class UserService {
 
   // TODO get members paginated
 
-  async sendUserConfirmation(email: string, firstName?: string) {
+  async sendUserEmailConfirmation(email: string, firstName?: string) {
     const token = this.jwtService.sign(
       { email },
       { secret: this.configService.get<string>('JWT_SECRET') },
@@ -39,7 +39,7 @@ export class UserService {
     await this.mailerService.sendMail({
       to: email,
       subject: 'Welcome to eTODAMO! Confirm your Email',
-      template: './confirmation',
+      template: './auth-register-confirmation',
       context: {
         name: firstName || email,
         url,
@@ -73,7 +73,10 @@ export class UserService {
 
     try {
       const user = await this.userRepo.save(newUser);
-      await this.sendUserConfirmation(user.email, user.userProfile.firstName);
+      await this.sendUserEmailConfirmation(
+        user.email,
+        user.userProfile.firstName,
+      );
       return user;
     } catch (error) {
       console.log(error);
