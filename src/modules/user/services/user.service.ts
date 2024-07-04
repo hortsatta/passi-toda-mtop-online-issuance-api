@@ -3,7 +3,11 @@ import {
   Injectable,
   NotFoundException,
   UnauthorizedException,
+  InternalServerErrorException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
+import { MailerService } from '@nestjs-modules/mailer';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -17,9 +21,31 @@ import { UserUpdateDto } from '../dtos/user-update.dto';
 export class UserService {
   constructor(
     @InjectRepository(User) private readonly userRepo: Repository<User>,
+    private readonly configService: ConfigService,
+    private readonly jwtService: JwtService,
+    private readonly mailerService: MailerService,
   ) {}
 
   // TODO get members paginated
+
+  async sendUserConfirmation(email: string, firstName?: string) {
+    const token = this.jwtService.sign(
+      { email },
+      { secret: this.configService.get<string>('JWT_SECRET') },
+    );
+
+    const url = `${this.configService.get<string>('APP_BASE_URL')}/register/confirm?token=${token}`;
+
+    await this.mailerService.sendMail({
+      to: email,
+      subject: 'Welcome to eTODAMO! Confirm your Email',
+      template: './confirmation',
+      context: {
+        name: firstName || email,
+        url,
+      },
+    });
+  }
 
   async findOneById(id: number): Promise<User> {
     return this.userRepo.findOne({ where: { id } });
@@ -42,10 +68,17 @@ export class UserService {
       password: encryptedPassword,
       role,
       userProfile,
-      approvalStatus: UserApprovalStatus.Approved,
+      approvalStatus: UserApprovalStatus.Pending,
     });
 
-    return this.userRepo.save(newUser);
+    try {
+      const user = await this.userRepo.save(newUser);
+      await this.sendUserConfirmation(user.email, user.userProfile.firstName);
+      return user;
+    } catch (error) {
+      console.log(error);
+      throw new InternalServerErrorException('An error occurred');
+    }
   }
 
   async update(id: number, userDto: UserUpdateDto): Promise<User> {

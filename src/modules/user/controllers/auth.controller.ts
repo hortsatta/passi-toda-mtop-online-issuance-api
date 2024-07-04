@@ -1,4 +1,12 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Query,
+} from '@nestjs/common';
 
 import { UseSerializeInterceptor } from '#/common/interceptors/serialize.interceptor';
 import { AuthService } from '../services/auth.service';
@@ -14,5 +22,10 @@ export class AuthController {
   @UseSerializeInterceptor(AuthResponseDto)
   signIn(@Body() authSignInDto: AuthSignInDto) {
     return this.authService.signIn(authSignInDto);
+  }
+
+  @Get('/register/confirm')
+  async confirmEmail(@Query('token') token: string): Promise<boolean> {
+    return this.authService.confirmRegistrationEmail(token);
   }
 }

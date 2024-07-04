@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
@@ -13,6 +18,7 @@ import { AuthSignInDto } from '../dtos/auth-sign-in.dto';
 export class AuthService {
   constructor(
     @InjectRepository(User) private readonly userRepo: Repository<User>,
+    private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -44,6 +50,26 @@ export class AuthService {
       accessToken,
       user,
     };
+  }
+
+  async confirmRegistrationEmail(token: string): Promise<boolean> {
+    const decoded = this.jwtService.verify(token, {
+      secret: this.configService.get<string>('JWT_SECRET'),
+    });
+
+    const email = decoded.email;
+    const user = await this.userRepo.findOne({ where: { email } });
+
+    if (!user || user.approvalStatus !== UserApprovalStatus.Pending) {
+      throw new BadRequestException('Cannot confirm email');
+    }
+
+    await this.userRepo.save({
+      ...user,
+      approvalStatus: UserApprovalStatus.Approved,
+    });
+
+    return true;
   }
 
   // TODO last logoutdate
