@@ -234,7 +234,7 @@ export class RateSheetService {
 
       const transformedRateSheeFees = renewalRateSheet.rateSheetFees.map(
         (fee) => {
-          if (fee.id === penaltyFee.id) {
+          if (fee.id === penaltyFee?.id) {
             return {
               ...fee,
               isPenaltyActive: true,
