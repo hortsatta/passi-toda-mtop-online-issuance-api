@@ -4,6 +4,7 @@ import {
   NotFoundException,
   UnauthorizedException,
   InternalServerErrorException,
+  BadRequestException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -45,6 +46,81 @@ export class UserService {
         url,
       },
     });
+  }
+
+  verifyUserToken(token: string): boolean {
+    try {
+      const decoded = this.jwtService.verify(token, {
+        secret: this.configService.get<string>('JWT_SECRET'),
+      });
+
+      const email = decoded.email;
+
+      if (!email)
+        throw new BadRequestException(
+          'Cannot reset password. Token is invalid',
+        );
+
+      return true;
+    } catch (error) {
+      throw new BadRequestException('Cannot reset password. Token is invalid');
+    }
+  }
+
+  async sendUserPasswordReset(email: string): Promise<boolean> {
+    const token = this.jwtService.sign(
+      { email },
+      { secret: this.configService.get<string>('JWT_SECRET'), expiresIn: '1h' },
+    );
+
+    const url = `${this.configService.get<string>('APP_BASE_URL')}/password/reset?token=${token}`;
+    const user = await this.findOneByEmail(email);
+
+    if (!user) throw new ConflictException('Email does not exist');
+
+    await this.mailerService.sendMail({
+      to: email,
+      subject: 'Reset your password',
+      template: './user-password-forgot',
+      context: {
+        name: user.userProfile.firstName || email,
+        url,
+      },
+    });
+
+    return true;
+  }
+
+  async resetUserPassword(
+    token: string,
+    newPassword: string,
+  ): Promise<boolean> {
+    try {
+      const decoded = this.jwtService.verify(token, {
+        secret: this.configService.get<string>('JWT_SECRET'),
+      });
+
+      const email = decoded.email;
+      const user = await this.userRepo.findOne({ where: { email } });
+
+      if (!user) {
+        throw new BadRequestException('Cannot reset password');
+      }
+
+      await this.updatePassword(user.id, newPassword);
+      await this.mailerService.sendMail({
+        to: email,
+        subject: 'Password has been reset',
+        template: './user-password-reset',
+        context: {
+          name: user.userProfile.firstName || email,
+        },
+      });
+
+      return true;
+    } catch (error) {
+      throw new BadRequestException('Cannot reset password. Token is invalid');
+    }
   }
 
   async findOneById(id: number): Promise<User> {

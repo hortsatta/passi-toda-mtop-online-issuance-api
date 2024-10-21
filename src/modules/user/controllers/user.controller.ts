@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UnauthorizedException,
 } from '@nestjs/common';
 
@@ -20,6 +21,10 @@ import { User } from '../entities/user.entity';
 import { UserCreateDto } from '../dtos/user-create.dto';
 import { UserUpdateDto } from '../dtos/user-update.dto';
 import { UserResponseDto } from '../dtos/user-response.dto';
+import {
+  UserPasswordForgotDto,
+  UserPasswordResetDto,
+} from '../dtos/user-password.dto';
 
 const MEMBER_URL = '/members';
 const TREASURER_URL = '/treasurers';
@@ -72,6 +77,26 @@ export class UserController {
     return this.userService.setApprovalStatus(+memberId, body.approvalStatus);
   }
 
+  @Get(`${MEMBER_URL}/password/verify`)
+  passwordVerifyToken(@Query('token') token: string): boolean {
+    return this.userService.verifyUserToken(token);
+  }
+
+  @Post(`${MEMBER_URL}/password/forgot`)
+  passwordForgot(@Body() body: UserPasswordForgotDto): Promise<boolean> {
+    const { email } = body;
+    return this.userService.sendUserPasswordReset(email);
+  }
+
+  @Post(`${MEMBER_URL}/password/reset`)
+  passwordReset(
+    @Query('token') token: string,
+    @Body() body: UserPasswordResetDto,
+  ): Promise<boolean> {
+    const { password } = body;
+    return this.userService.resetUserPassword(token, password);
+  }
+
   // ADMIN
 
   @Post(`${ADMIN_URL}/register`)
@@ -86,7 +111,7 @@ export class UserController {
   async updateUserById(
     @Param('userId') id: string,
     @Body() body: UserUpdateDto,
-  ) {
+  ): Promise<User> {
     const user = await this.userService.findOneById(+id);
 
     if (!user) {
@@ -100,7 +125,7 @@ export class UserController {
 
   @Delete(`${ADMIN_URL}/:userId`)
   @UseAuthGuard(UserRole.Admin)
-  deleteUserById(@Param('userId') id: string) {
+  deleteUserById(@Param('userId') id: string): Promise<boolean> {
     return this.userService.delete(+id);
   }
 
@@ -119,7 +144,7 @@ export class UserController {
   async updateMemberById(
     @Param('userId') id: string,
     @Body() body: UserUpdateDto,
-  ) {
+  ): Promise<User> {
     const user = await this.userService.findOneById(+id);
 
     if (!user) {
