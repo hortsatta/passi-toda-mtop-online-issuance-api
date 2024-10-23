@@ -437,7 +437,10 @@ export class FranchiseRenewalService {
       skip: 0,
     });
 
-    if (latestFranchiseRenewals[0].id !== franchiseRenewal.id)
+    if (
+      latestFranchiseRenewals.length &&
+      latestFranchiseRenewals[0].id !== franchiseRenewal.id
+    )
       throw new NotFoundException('Franchise renewal invalid');
 
     const previousTarget =
