@@ -14,6 +14,15 @@ export class FranchiseResponseDto extends BaseResponseDto {
   mvFileNo: string;
 
   @Expose()
+  vehicleMake: string;
+
+  @Expose()
+  vehicleMotorNo: string;
+
+  @Expose()
+  vehicleChassisNo: string;
+
+  @Expose()
   plateNo: string;
 
   @Expose()

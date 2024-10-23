@@ -13,6 +13,15 @@ export class Franchise extends BaseEntity {
   @Column({ type: 'varchar', length: 15 })
   mvFileNo: string;
 
+  @Column({ type: 'text' })
+  vehicleMake: string;
+
+  @Column({ type: 'varchar', length: 25 })
+  vehicleMotorNo: string;
+
+  @Column({ type: 'varchar', length: 17 })
+  vehicleChassisNo: string;
+
   @Column({ type: 'varchar', length: 7 })
   plateNo: string;
 

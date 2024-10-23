@@ -19,6 +19,21 @@ export class FranchiseCreateDto {
   mvFileNo: string;
 
   @IsString()
+  @MinLength(1)
+  @MaxLength(255)
+  vehicleMake: string;
+
+  @IsString()
+  @MinLength(5)
+  @MaxLength(25)
+  vehicleMotorNo: string;
+
+  @IsString()
+  @MinLength(11)
+  @MaxLength(17)
+  vehicleChassisNo: string;
+
+  @IsString()
   @MinLength(3)
   @MaxLength(7)
   plateNo: string;

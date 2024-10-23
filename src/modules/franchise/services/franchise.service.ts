@@ -315,6 +315,9 @@ export class FranchiseService {
         return [
           { plateNo: ILike(`%${q}%`), ...baseWhere },
           { mvFileNo: ILike(`%${q}%`), ...baseWhere },
+          { vehicleMake: ILike(`%${q}%`), ...baseWhere },
+          { vehicleMotorNo: ILike(`%${q}%`), ...baseWhere },
+          { vehicleChassisNo: ILike(`%${q}%`), ...baseWhere },
         ];
       }
 
@@ -576,6 +579,9 @@ export class FranchiseService {
     const {
       mvFileNo: targetMvFileNo,
       plateNo: targetPlateNo,
+      vehicleMake: targetVehicleMake,
+      vehicleMotorNo: targetVehicleMotorNo,
+      vehicleChassisNo: targetVehicleChassisNo,
       todaAssociationId,
       driverProfile: newDriverProfile,
       driverProfileId,
@@ -587,6 +593,9 @@ export class FranchiseService {
 
     const mvFileNo = targetMvFileNo.toLowerCase();
     const plateNo = targetPlateNo.toLowerCase();
+    const vehicleMake = targetVehicleMake.toLowerCase();
+    const vehicleMotorNo = targetVehicleMotorNo.toLowerCase();
+    const vehicleChassisNo = targetVehicleChassisNo.toLowerCase();
 
     let driverProfile = null;
 
@@ -605,6 +614,9 @@ export class FranchiseService {
       ...moreFranchiseDto,
       mvFileNo,
       plateNo,
+      vehicleMake,
+      vehicleMotorNo,
+      vehicleChassisNo,
       todaAssociation: { id: todaAssociationId },
       isDriverOwner,
       driverProfile,
@@ -631,6 +643,9 @@ export class FranchiseService {
     const {
       mvFileNo: targetMvFileNo,
       plateNo: targetPlateNo,
+      vehicleMake: targetVehicleMake,
+      vehicleMotorNo: targetVehicleMotorNo,
+      vehicleChassisNo: targetVehicleChassisNo,
       todaAssociationId,
       ...moreFranchiseDto
     } = franchiseDto;
@@ -643,12 +658,18 @@ export class FranchiseService {
 
     const mvFileNo = targetMvFileNo?.toLowerCase();
     const plateNo = targetPlateNo?.toLowerCase();
+    const vehicleMake = targetVehicleMake?.toLowerCase();
+    const vehicleMotorNo = targetVehicleMotorNo?.toLowerCase();
+    const vehicleChassisNo = targetVehicleChassisNo?.toLowerCase();
 
     const updatedFranchise = await this.franchiseRepo.save({
       ...franchise,
       ...moreFranchiseDto,
       ...(mvFileNo && { mvFileNo }),
       ...(plateNo && { plateNo }),
+      ...(vehicleMake && { vehicleMake }),
+      ...(vehicleMotorNo && { vehicleMotorNo }),
+      ...(vehicleChassisNo && { vehicleChassisNo }),
       todaAssociation: { id: todaAssociationId },
     });
 
