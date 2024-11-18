@@ -10,6 +10,7 @@ import { Franchise } from './franchise/entities/franchise.entity';
 import { FranchiseRenewal } from './franchise/entities/franchise-renewal.entity';
 import { FranchiseStatusRemark } from './franchise/entities/franchise-status-remark.entity';
 import { TodaAssociation } from './franchise/entities/toda-association.entity';
+// import { ApprovingAuthority } from './franchise/entities/approving-authority.entity';
 import { RateSheet } from './rate-sheet/entities/rate-sheet.entity';
 import { RateSheetFee } from './rate-sheet/entities/rate-sheet-fee.entity';
 
@@ -43,6 +44,7 @@ import { RateSheetFee } from './rate-sheet/entities/rate-sheet-fee.entity';
             FranchiseRenewal,
             FranchiseStatusRemark,
             TodaAssociation,
+            // ApprovingAuthority,
             RateSheet,
             RateSheetFee,
           ],
