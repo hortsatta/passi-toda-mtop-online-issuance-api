@@ -10,7 +10,7 @@ import { FranchiseRenewal } from './franchise-renewal.entity';
 
 @Entity()
 export class Franchise extends BaseEntity {
-  @Column({ type: 'varchar', length: 15 })
+  @Column({ type: 'varchar', nullable: true })
   mvFileNo: string;
 
   @Column({ type: 'text' })

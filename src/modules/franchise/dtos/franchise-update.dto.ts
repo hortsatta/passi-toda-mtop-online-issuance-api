@@ -4,14 +4,13 @@ import {
   IsOptional,
   IsPositive,
   IsString,
-  Length,
   MaxLength,
   MinLength,
 } from 'class-validator';
 
 export class FranchiseUpdateDto {
   @IsString()
-  @Length(15, 15)
+  @IsOptional()
   mvFileNo: string;
 
   @IsString()

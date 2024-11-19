@@ -47,7 +47,6 @@ export class FranchiseService {
     memberId: number,
   ) {
     const {
-      mvFileNo,
       plateNo,
       todaAssociationId,
       driverProfileId,
@@ -56,7 +55,7 @@ export class FranchiseService {
     } = franchiseDto;
 
     const existingFranchise = await this.franchiseRepo.findOne({
-      where: [{ mvFileNo }, { plateNo }],
+      where: { plateNo },
       relations: {
         user: true,
         franchiseRenewals: { driverProfile: true, todaAssociation: true },
@@ -134,10 +133,7 @@ export class FranchiseService {
     };
 
     const existingFranchise = await this.franchiseRepo.findOne({
-      where: [
-        { mvFileNo: franchise.mvFileNo, ...baseWhere },
-        { plateNo: franchise.plateNo, ...baseWhere },
-      ],
+      where: { plateNo: franchise.plateNo, ...baseWhere },
     });
 
     if (existingFranchise) {
@@ -218,10 +214,7 @@ export class FranchiseService {
       }
 
       if (q?.trim()) {
-        return [
-          { plateNo: ILike(`%${q}%`), ...baseWhere },
-          { mvFileNo: ILike(`%${q}%`), ...baseWhere },
-        ];
+        return [{ plateNo: ILike(`%${q}%`), ...baseWhere }];
       }
 
       return baseWhere;
@@ -314,7 +307,6 @@ export class FranchiseService {
       if (q?.trim()) {
         return [
           { plateNo: ILike(`%${q}%`), ...baseWhere },
-          { mvFileNo: ILike(`%${q}%`), ...baseWhere },
           { vehicleMake: ILike(`%${q}%`), ...baseWhere },
           { vehicleMotorNo: ILike(`%${q}%`), ...baseWhere },
           { vehicleChassisNo: ILike(`%${q}%`), ...baseWhere },
@@ -528,10 +520,7 @@ export class FranchiseService {
       ),
     };
 
-    const where = [
-      { mvFileNo: Equal(mvPlateNo), ...baseWhere },
-      { plateNo: Equal(mvPlateNo), ...baseWhere },
-    ];
+    const where = [{ plateNo: Equal(mvPlateNo), ...baseWhere }];
 
     const franchise = await this.franchiseRepo.findOne({
       where,
@@ -577,7 +566,6 @@ export class FranchiseService {
     memberId: number,
   ): Promise<FranchiseResponse> {
     const {
-      mvFileNo: targetMvFileNo,
       plateNo: targetPlateNo,
       vehicleMake: targetVehicleMake,
       vehicleMotorNo: targetVehicleMotorNo,
@@ -591,7 +579,6 @@ export class FranchiseService {
 
     await this.validateCreateFranchise(franchiseDto, memberId);
 
-    const mvFileNo = targetMvFileNo.toLowerCase();
     const plateNo = targetPlateNo.toLowerCase();
     const vehicleMake = targetVehicleMake.toLowerCase();
     const vehicleMotorNo = targetVehicleMotorNo.toLowerCase();
@@ -612,7 +599,6 @@ export class FranchiseService {
 
     const franchise = this.franchiseRepo.create({
       ...moreFranchiseDto,
-      mvFileNo,
       plateNo,
       vehicleMake,
       vehicleMotorNo,
@@ -641,7 +627,6 @@ export class FranchiseService {
     memberId: number,
   ): Promise<FranchiseResponse> {
     const {
-      mvFileNo: targetMvFileNo,
       plateNo: targetPlateNo,
       vehicleMake: targetVehicleMake,
       vehicleMotorNo: targetVehicleMotorNo,
@@ -656,7 +641,6 @@ export class FranchiseService {
       where: { id, user: { id: memberId } },
     });
 
-    const mvFileNo = targetMvFileNo?.toLowerCase();
     const plateNo = targetPlateNo?.toLowerCase();
     const vehicleMake = targetVehicleMake?.toLowerCase();
     const vehicleMotorNo = targetVehicleMotorNo?.toLowerCase();
@@ -665,7 +649,6 @@ export class FranchiseService {
     const updatedFranchise = await this.franchiseRepo.save({
       ...franchise,
       ...moreFranchiseDto,
-      ...(mvFileNo && { mvFileNo }),
       ...(plateNo && { plateNo }),
       ...(vehicleMake && { vehicleMake }),
       ...(vehicleMotorNo && { vehicleMotorNo }),
